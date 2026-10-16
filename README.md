@@ -8,6 +8,38 @@ Implementa (hasta el Sprint 2):
 - **Seguridad**: autenticación con **JWT** y **autorización por rol** (401 sin token, 403 sin permiso).
 - **HU04 – Registrar incidencia** y **HU05 – Asignar incidencia a técnico** (respetando el límite de atención).
 
+## Estructura del proyecto
+
+```
+src/main/java/com/softcorp/SoftCorpBackend/
+├── controller/   Endpoints HTTP (reciben la petición y llaman al service)
+├── dto/          Datos que entran y salen en JSON (con validaciones)
+├── service/      Reglas de negocio, login y tokens JWT
+├── repository/   Consultas a la base de datos (Spring Data JPA)
+├── model/        Tablas como clases Java (JPA)
+├── security/     Filtro JWT y reglas de acceso por rol
+├── exception/    Convierte los errores en respuestas JSON
+└── config/       Swagger con el botón "Authorize"
+src/main/resources/
+├── application.properties   Configuración (BD, JWT, CORS)
+├── schema.sql               Crea las tablas
+└── data.sql                 Datos iniciales y usuarios de prueba
+```
+
+## Flujo de una petición
+
+```
+Petición HTTP (con "Authorization: Bearer <token>")
+  → JwtAuthenticationFilter   verifica el token e identifica al usuario y su rol
+  → SecurityConfig            ¿ruta pública? ¿tiene token? ¿tiene el rol?  (si no: 401 / 403)
+  → Controller                recibe y valida los datos (@Valid)            (si falla: 400)
+  → Service                   aplica las reglas de negocio                  (si falla: 400)
+  → Repository                consulta / guarda en la base de datos
+  ← Controller                devuelve 200 + JSON
+```
+
+Los errores los responde `GlobalExceptionHandler` con un JSON que incluye `status` y `message`.
+
 ## Usuarios de prueba
 
 Se crean solos al arrancar el backend (archivo `src/main/resources/data.sql`):
@@ -24,12 +56,10 @@ También se cargan 5 incidencias de ejemplo. Son solo para pruebas.
 
 ## Cómo ejecutarlo
 
-Ejecuta `SoftCorpBackendApplication` desde el editor (o `./mvnw spring-boot:run`).
+1. Crea el archivo `.env` con los datos de conexión a **Neon** (ver abajo).
+2. Ejecuta `SoftCorpBackendApplication` desde el editor (o `./mvnw spring-boot:run`).
 
-- **Sin archivo `.env`**: usa H2, una base de datos en memoria. No hay que instalar nada, pero los datos se borran al apagar el backend.
-- **Con archivo `.env`**: usa PostgreSQL (por ejemplo, **Neon**). Ver abajo.
-
-Las tablas (`schema.sql`) y los datos iniciales (`data.sql`) se crean solos al arrancar.
+La base de datos es **PostgreSQL en Neon**. Las tablas (`schema.sql`) y los datos iniciales (`data.sql`) se crean solos al arrancar.
 
 ## Base de datos en Neon
 
