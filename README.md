@@ -56,12 +56,10 @@ También se cargan 5 incidencias de ejemplo. Son solo para pruebas.
 
 ## Cómo ejecutarlo
 
-Ejecuta `SoftCorpBackendApplication` desde el editor (o `./mvnw spring-boot:run`).
+1. Crea el archivo `.env` con los datos de conexión a **Neon** (ver abajo).
+2. Ejecuta `SoftCorpBackendApplication` desde el editor (o `./mvnw spring-boot:run`).
 
-- **Sin archivo `.env`**: usa H2, una base de datos en memoria. No hay que instalar nada, pero los datos se borran al apagar el backend.
-- **Con archivo `.env`**: usa PostgreSQL (por ejemplo, **Neon**). Ver abajo.
-
-Las tablas (`schema.sql`) y los datos iniciales (`data.sql`) se crean solos al arrancar.
+La base de datos es **PostgreSQL en Neon**. Las tablas (`schema.sql`) y los datos iniciales (`data.sql`) se crean solos al arrancar.
 
 ## Base de datos en Neon
 
