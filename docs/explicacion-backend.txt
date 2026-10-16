@@ -1,0 +1,406 @@
+==========================================================================
+ EXPLICACIÓN DEL BACKEND - SISTEMA DE INCIDENCIAS SOFT CORPORATION
+ Carpeta: /home/brando/Documentos/SoftCorpBackend/src/main   (Spring Boot 4, Java 21)
+==========================================================================
+
+ CONTENIDO
+   1. Visión general y capas
+   2. resources/  (application.properties, schema.sql, data.sql)
+   3. SoftCorpBackendApplication.java
+   4. model/        (entidades = tablas)
+   5. repository/   (consultas a la BD)
+   6. dto/          (datos que entran y salen en JSON)
+   7. service/      (lógica de negocio y JWT)
+   8. security/     (filtro JWT y reglas de acceso)
+   9. controller/   (endpoints HTTP)
+  10. exception/    (errores en JSON)
+  11. config/       (Swagger)
+  12. Flujo completo de una petición
+
+
+==========================================================================
+ 1. VISIÓN GENERAL Y CAPAS
+==========================================================================
+
+ Estructura de src/main:
+
+   java/com/softcorp/SoftCorpBackend/
+     SoftCorpBackendApplication.java   -> arranque
+     controller/   -> reciben las peticiones HTTP
+     dto/          -> formato de los datos de entrada/salida (JSON)
+     service/      -> reglas de negocio, login y tokens
+     repository/   -> consultas a la base de datos
+     model/        -> tablas como clases Java
+     security/     -> verificación del token y permisos por rol
+     exception/    -> convierte errores en respuestas JSON
+     config/       -> configuración de Swagger
+   resources/
+     application.properties  -> configuración
+     schema.sql              -> crea las tablas
+     data.sql                -> datos iniciales
+
+ Recorrido de una petición:
+
+   Petición HTTP
+     -> security (JwtAuthenticationFilter + SecurityConfig)
+     -> controller (recibe, valida el DTO)
+     -> service    (aplica las reglas)
+     -> repository (consulta / guarda en la BD)
+     -> model      (las filas como objetos)
+     <- service convierte a DTO de respuesta
+     <- controller devuelve JSON
+   Si algo falla -> exception/GlobalExceptionHandler responde con el error.
+
+ Conceptos de Spring usados:
+   @RestController / @Service / @Repository / @Component / @Configuration:
+     marcan la clase para que Spring la cree y la "inyecte" donde se necesite.
+   @RequiredArgsConstructor (Lombok): crea el constructor con los campos
+     "final"; así Spring inyecta las dependencias (inyección por constructor).
+   Lombok @Data / @Builder / @NoArgsConstructor / @AllArgsConstructor:
+     generan getters, setters, constructores y el patrón builder
+     (Usuario.builder().username("x").build()).
+   JPA (@Entity, @Table, @Column, @ManyToOne...): relaciona clases con tablas.
+   Spring Data (JpaRepository): las consultas se generan a partir del nombre
+     del método (findByUsername -> SELECT ... WHERE username = ?).
+   @Transactional: el método se ejecuta en una transacción de base de datos.
+   @Valid + @NotBlank, @Size, @Pattern, @NotNull: validan los datos que llegan.
+
+
+==========================================================================
+ 2. resources/
+==========================================================================
+
+ ------------------------------------------------------------------
+ application.properties
+ ------------------------------------------------------------------
+   server.port=8080
+   spring.config.import=optional:file:.env[.properties]
+       Lee las variables del archivo .env (datos de conexión a Neon).
+   spring.datasource.url / username / password
+       ${SPRING_DATASOURCE_URL}, ${SPRING_DATASOURCE_USERNAME}, ${SPRING_DATASOURCE_PASSWORD}
+       Conexión a la base de datos PostgreSQL en Neon, tomada del .env.
+   spring.sql.init.mode=always
+       Ejecuta schema.sql y data.sql en cada arranque.
+   spring.jpa.hibernate.ddl-auto=none
+       Hibernate no crea tablas: las crea schema.sql.
+   spring.jpa.open-in-view=false
+       La conexión a la BD se cierra al terminar el service (buena práctica).
+   jwt.secret=${TOKEN_JWT_SECRET:<clave de prueba>}
+       Clave para firmar los tokens (en Base64). Con .env se usa la propia.
+   jwt.expiration=3600000
+       Duración del token: 1 hora (en milisegundos).
+   app.cors.allowed-origin=http://localhost:4200
+       Única web autorizada para llamar a la API (el frontend).
+
+ ------------------------------------------------------------------
+ schema.sql  (crea las tablas, "IF NOT EXISTS" para no perder datos)
+ ------------------------------------------------------------------
+   MÓDULO DE ACCESO:
+     rol         id_rol, codigo (JEFE/TECNICO/SISTEMAS), descripcion
+     modulo      id_mod, descripcion, url (ruta del frontend), activo ('S')
+     rol_modulo  id_rol + id_mod  -> qué módulos ve cada rol
+     persona     id_persona, nombres, apellidos, num_documento, telefono, created_at
+     usuario     id_usuario, username, password (BCrypt), id_persona, id_rol,
+                 limite_atencion (máx. incidencias pendientes de un técnico)
+   SPRINT 2:
+     incidencia  id_incidencia, codigo_equipo, problema, usuario_responsable,
+                 area, medio_reporte (EMAIL/TELEFONO), fecha_registro,
+                 id_registrado_por, id_tecnico (NULL = sin asignar),
+                 fecha_asignacion, estado (PENDIENTE/SOLUCIONADO)
+
+ ------------------------------------------------------------------
+ data.sql  (datos iniciales; "ON CONFLICT DO NOTHING" / "NOT EXISTS"
+            evitan duplicados al reiniciar)
+ ------------------------------------------------------------------
+   - 3 roles.
+   - 8 módulos; su url es la ruta de Angular (ej. 'asignar-incidencia').
+   - rol_modulo: Jefe 4 módulos, Técnico 6, Sistemas 2.
+   - 5 personas y 5 usuarios de prueba (contraseñas ya cifradas con BCrypt):
+       jefe/jefe123, tecnico/tecnico123 (límite 5), atorres/tecnico123 (3),
+       crojas/tecnico123 (2), sistemas/sistemas123
+   - 5 incidencias de ejemplo (Carlos Rojas queda con 2 de 2: sin cupo).
+
+
+==========================================================================
+ 3. SoftCorpBackendApplication.java
+==========================================================================
+
+   @SpringBootApplication
+   main() -> SpringApplication.run(...)
+   Arranca todo: lee la configuración, ejecuta los .sql, crea los beans
+   (controllers, services...) y levanta el servidor en el puerto 8080.
+
+
+==========================================================================
+ 4. model/   (entidades JPA: cada clase = una tabla)
+==========================================================================
+
+ Rol         @Table("rol")     idRol, codigo, descripcion
+ Modulo      @Table("modulo")  idMod, descripcion, url, activo
+ Persona     @Table("persona") idPersona, nombres, apellidoPaterno,
+                               apellidoMaterno, numDocumento, telefono,
+                               createdAt (por defecto: ahora)
+ Usuario     @Table("usuario") id, username,
+                               passwordHash (columna "password", cifrada),
+                               persona   (@OneToOne  -> id_persona),
+                               rol       (@ManyToOne -> id_rol),
+                               limiteAtencion (por defecto 5)
+ Incidencia  @Table("incidencia")
+                               idIncidencia, codigoEquipo, problema,
+                               usuarioResponsable, area, medioReporte,
+                               fechaRegistro,
+                               registradoPor (@ManyToOne Usuario),
+                               tecnico       (@ManyToOne Usuario, puede ser null),
+                               fechaAsignacion, estado
+                               Constantes: PENDIENTE, SOLUCIONADO
+
+ Anotaciones: @Id (clave primaria), @GeneratedValue(IDENTITY) (la genera
+ la BD), @Column(name=...) (nombre de la columna), @JoinColumn (clave foránea).
+
+
+==========================================================================
+ 5. repository/   (interfaces; Spring genera el código de las consultas)
+==========================================================================
+
+ Todas extienden JpaRepository<Entidad, TipoId>, que ya trae:
+   findAll(), findById(id), save(obj), deleteById(id), count()...
+
+ RolRepository
+   findByCodigo(codigo)        -> rol por código (ej. "TECNICO")
+ ModuloRepository
+   findByRolId(idRol)          -> @Query nativa: módulos activos del rol
+                                  (JOIN con rol_modulo). Arma el menú.
+ PersonaRepository
+   existsByNumDocumento(num)   -> ¿ya existe ese DNI?
+ UsuarioRepository
+   findByUsername(username)    -> usuario para el login
+   existsByUsername(username)  -> ¿ya existe ese usuario?
+   findByRolCodigoOrderByIdAsc(codigo) -> todos los técnicos
+ IncidenciaRepository
+   findAllByOrderByIdIncidenciaDesc()  -> incidencias, la más nueva primero
+   countByTecnicoAndEstado(tecnico, estado)
+                               -> carga del técnico (cuántas PENDIENTES tiene)
+
+
+==========================================================================
+ 6. dto/   (Data Transfer Objects: lo que viaja en JSON)
+==========================================================================
+
+ Se usan para no exponer las entidades directamente (ej. no devolver la
+ contraseña) y para validar lo que llega.
+
+ ENTRADA (request)
+   LoginRequestDTO        username, password (@NotBlank)
+   RegisterRequestDTO     username, password (@Size min 6), codigoRol,
+                          persona (PersonaRequest, @Valid).
+                          toString() propio: no imprime la contraseña.
+   PersonaRequest         nombres, apellidos, numDocumento, telefono.
+                          toEntity(): convierte a Persona.
+   IncidenciaRequest      codigoEquipo, problema, usuarioResponsable (@NotBlank),
+                          area, medioReporte (@Pattern EMAIL|TELEFONO)
+   AsignarTecnicoRequest  idTecnico (@NotNull)
+
+ SALIDA (response)
+   AuthResponseDTO        token
+   PerfilResponseDTO      username, nombres, apellidos, rol, rolDescripcion, modulos
+   ModuloDTO (record)     descripcion, url.  fromEntity(Modulo)
+   IncidenciaResponse     idIncidencia, codigo ("INC-0001"), datos de la incidencia,
+                          registradoPor y tecnico como NOMBRES.
+                          fromEntity(): arma el código con String.format("INC-%04d")
+                          fromEntities(): convierte una lista
+                          nombreCompleto(): "Nombres ApellidoPaterno"
+   TecnicoDisponibilidadResponse
+                          idTecnico, nombre, carga, limite, disponible
+
+
+==========================================================================
+ 7. service/   (lógica de negocio)
+==========================================================================
+
+ ------------------------------------------------------------------
+ JwtUtil  (crear y validar tokens)
+ ------------------------------------------------------------------
+   generateToken(usuario, modulos)
+       Arma el token con "claims" (datos):
+         personaId, names, lastNames, role, roleDescription, modules
+       + subject (username), issuedAt (ahora), expiration (ahora + 1 hora)
+       y lo firma con la clave secreta (signWith).
+   extractUsername(token)
+       Devuelve el usuario del token. Si la firma no coincide o venció,
+       lanza JwtException.
+   isTokenValid(token, usuario)
+       true si el usuario del token es el mismo y no venció.
+   extractAllClaims(token)   (privado)
+       Verifica la firma y devuelve los datos del token.
+   getSigningKey()           (privado)
+       Convierte jwt.secret (Base64) en la clave HMAC para firmar/verificar.
+
+ ------------------------------------------------------------------
+ AuthService  (registro, login y perfil)
+ ------------------------------------------------------------------
+   register(request)      @Transactional
+       1. ¿Usuario repetido? -> error 400
+       2. ¿DNI repetido?     -> error 400
+       3. ¿Rol válido?       -> si no, error 400
+       4. Guarda la Persona y el Usuario (contraseña cifrada con BCrypt)
+       5. Devuelve un token
+   login(request)
+       1. Busca el usuario; si no existe -> 401
+       2. passwordEncoder.matches(): compara con el hash; si no -> 401
+          (mismo mensaje en ambos casos para no dar pistas)
+       3. Devuelve un token
+   perfil(usuario)
+       Arma el PerfilResponseDTO (nombre, rol y módulos).
+   crearRespuesta(usuario)   (privado) -> genera el token con sus módulos
+   modulosDelRol(rol)        (privado) -> ModuloRepository.findByRolId -> ModuloDTO
+
+ ------------------------------------------------------------------
+ IncidenciaService  (HU04 y HU05)
+ ------------------------------------------------------------------
+   listar()                       @Transactional(readOnly)
+       Todas las incidencias como IncidenciaResponse.
+   registrar(request, registradoPor)   HU04
+       Crea la incidencia con:
+         codigoEquipo en mayúsculas, fechaRegistro = ahora,
+         registradoPor = usuario del token, estado = PENDIENTE
+       y la guarda.
+   asignar(idIncidencia, idTecnico)    HU05
+       Comprueba en orden (si falla -> error 400 con mensaje):
+         - la incidencia existe
+         - está PENDIENTE
+         - no tiene técnico asignado
+         - el usuario elegido es TECNICO
+         - carga < límite de atención   (regla del enunciado)
+       Guarda el técnico y la fecha de asignación.
+   disponibilidadTecnicos()
+       Para cada técnico: carga (pendientes), límite y disponible.
+
+
+==========================================================================
+ 8. security/
+==========================================================================
+
+ ------------------------------------------------------------------
+ JwtAuthenticationFilter  (se ejecuta en CADA petición)
+ ------------------------------------------------------------------
+   doFilterInternal(request, response, chain)
+     1. Lee la cabecera "Authorization". Si no empieza con "Bearer ",
+        deja pasar la petición sin usuario.
+     2. Saca el token y obtiene el username (JwtUtil.extractUsername).
+     3. Busca el usuario en la BD y verifica el token (isTokenValid).
+     4. Si es válido: registra al usuario como autenticado, con el permiso
+        "ROLE_" + código del rol (ej. ROLE_JEFE), en el SecurityContext.
+     5. Si el token es inválido o venció: captura la excepción y sigue
+        sin usuario (luego SecurityConfig responde 401 si la ruta es privada).
+
+ ------------------------------------------------------------------
+ SecurityConfig  (reglas de acceso)
+ ------------------------------------------------------------------
+   securityFilterChain(http)
+     - csrf desactivado (API con tokens, sin cookies)
+     - cors activado (usa corsConfigurationSource)
+     - Reglas:
+         /api/auth/**                       -> público
+         /swagger-ui/**, /v3/api-docs/**    -> público
+         /error                             -> público
+         PUT /api/v1/incidencias/*/asignar  -> solo ROLE_JEFE
+         /api/v1/tecnicos/**                -> solo ROLE_JEFE
+         todo lo demás                      -> con token
+     - STATELESS: no guarda sesión en el servidor
+     - Sin token válido -> 401
+     - Con token pero sin el rol -> 403 con JSON
+       "No tienes permiso para realizar esta acción"
+     - Agrega JwtAuthenticationFilter antes del filtro estándar de login
+   passwordEncoder()        -> BCryptPasswordEncoder (cifrar y comparar contraseñas)
+   authenticationManager()  -> requerido por Spring Security
+   corsConfigurationSource()-> permite solo http://localhost:4200,
+                               métodos GET/POST/PUT/DELETE/OPTIONS
+
+
+==========================================================================
+ 9. controller/   (endpoints)
+==========================================================================
+
+ AuthController           /api/auth
+   POST /register  register(@Valid RegisterRequestDTO)  -> { token }
+                   (registra en el log solo el username, nunca la contraseña)
+   POST /login     login(@Valid LoginRequestDTO)        -> { token }
+
+ PerfilController         /api/v1/perfil
+   GET             perfil(@AuthenticationPrincipal Usuario) -> PerfilResponseDTO
+                   @AuthenticationPrincipal = el usuario que puso el filtro JWT
+
+ IncidenciaController     /api/v1/incidencias
+   GET                    listar()                               (con token)
+   POST                   registrar(@Valid IncidenciaRequest,
+                                    @AuthenticationPrincipal Usuario)  HU04
+   PUT /{id}/asignar      asignar(@PathVariable id,
+                                  @Valid AsignarTecnicoRequest)        HU05 (JEFE)
+
+ TecnicoController        /api/v1/tecnicos
+   GET /disponibilidad    disponibilidad()                       (JEFE)
+
+ Los controllers no tienen lógica: reciben, validan y llaman al service.
+
+
+==========================================================================
+ 10. exception/
+==========================================================================
+
+ GlobalExceptionHandler  (@RestControllerAdvice: atrapa errores de todos
+                          los controllers)
+   handleAuthentication()   AuthenticationException          -> 401
+   handleIllegalArgument()  IllegalArgumentException         -> 400
+                            (usuario repetido, sin cupo, etc.)
+   handleValidation()       MethodArgumentNotValidException  -> 400
+                            (falla @NotBlank, @Size...; devuelve el 1er mensaje)
+   handleBadJson()          HttpMessageNotReadableException  -> 400
+                            "El cuerpo de la petición no es un JSON válido"
+   error()  (privado)       arma el JSON: timestamp, status, error, message
+
+
+==========================================================================
+ 11. config/
+==========================================================================
+
+ OpenApiConfig
+   @OpenAPIDefinition: título y descripción de la API en Swagger.
+   @SecurityScheme "bearerAuth": agrega el botón "Authorize" para pegar el
+   token y probar las rutas protegidas.
+   Swagger: http://localhost:8080/swagger-ui/index.html
+
+
+==========================================================================
+ 12. FLUJO COMPLETO DE UNA PETICIÓN
+==========================================================================
+
+ LOGIN  (POST /api/auth/login)
+   JwtAuthenticationFilter: sin token -> sigue
+   SecurityConfig: /api/auth/** público
+   AuthController.login -> @Valid
+   AuthService.login: findByUsername + BCrypt
+   ModuloRepository.findByRolId (módulos del rol)
+   JwtUtil.generateToken -> { token }
+
+ REGISTRAR INCIDENCIA  (POST /api/v1/incidencias + Bearer)
+   JwtAuthenticationFilter: valida token -> usuario con ROLE_xxx
+   SecurityConfig: ruta con token -> pasa
+   IncidenciaController.registrar -> @Valid IncidenciaRequest
+   IncidenciaService.registrar: fecha, registradoPor, PENDIENTE
+   IncidenciaRepository.save -> INSERT
+   IncidenciaResponse.fromEntity -> JSON
+
+ ASIGNAR  (PUT /api/v1/incidencias/{id}/asignar + Bearer)
+   Filtro JWT -> ROLE_JEFE ?   (otro rol -> 403)
+   IncidenciaService.asignar: validaciones + límite de atención
+   (falla -> IllegalArgumentException -> GlobalExceptionHandler -> 400)
+   guarda técnico y fecha -> JSON
+
+ CÓDIGOS DE RESPUESTA
+   200 OK            todo bien
+   400 Bad Request   datos inválidos o regla incumplida (mensaje en "message")
+   401 Unauthorized  sin token, token vencido/alterado, o login incorrecto
+   403 Forbidden     con token pero el rol no tiene permiso
+   500               error inesperado del servidor
+
+==========================================================================
