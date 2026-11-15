@@ -3,6 +3,9 @@ target/
 
 ### Variables de entorno (contraseñas y claves) ###
 .env
+.env-local
+.env-*
+!.env.example
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
