@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-// Datos personales del miembro del área
 @Entity
 @Data
 @NoArgsConstructor
@@ -39,4 +38,14 @@ public class Persona {
     @Builder.Default
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    public Persona(Persona source) {
+        this.idPersona = source.idPersona;
+        this.nombres = source.nombres;
+        this.apellidoPaterno = source.apellidoPaterno;
+        this.apellidoMaterno = source.apellidoMaterno;
+        this.numDocumento = source.numDocumento;
+        this.telefono = source.telefono;
+        this.createdAt = source.createdAt;
+    }
 }

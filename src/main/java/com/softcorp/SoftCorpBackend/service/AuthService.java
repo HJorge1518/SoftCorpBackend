@@ -1,5 +1,6 @@
 package com.softcorp.SoftCorpBackend.service;
 
+import com.softcorp.SoftCorpBackend.auditoria.AuditoriaService;
 import com.softcorp.SoftCorpBackend.dto.AuthResponseDTO;
 import com.softcorp.SoftCorpBackend.dto.LoginRequestDTO;
 import com.softcorp.SoftCorpBackend.dto.ModuloDTO;
@@ -30,13 +31,13 @@ public class AuthService {
     private final ModuloRepository moduloRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final AuditoriaService auditoriaService;
 
-    // Crea la persona y su usuario, y devuelve un token
     @Transactional
     public AuthResponseDTO register(RegisterRequestDTO request) {
-        String username = request.getUsername().trim();
+        String username = request.getUsername().trim().toLowerCase();
         if (usuarioRepository.existsByUsername(username))
-            throw new IllegalArgumentException("Ya existe un usuario con ese nombre");
+            throw new IllegalArgumentException("Ya existe un usuario con ese correo");
 
         PersonaRequest personaDTO = request.getPersona();
         if (personaRepository.existsByNumDocumento(personaDTO.getNumDocumento()))
@@ -53,15 +54,16 @@ public class AuthService {
                 .persona(persona)
                 .rol(rol)
                 .build();
-        usuarioRepository.save(usuario);
+        usuario = usuarioRepository.save(usuario);
+
+        auditoriaService.registrarCreacion("public", "persona", persona.getIdPersona().toString(), "Acceso");
+        auditoriaService.registrarCreacion("public", "usuario", usuario.getId().toString(), "Acceso");
 
         return crearRespuesta(usuario);
     }
 
-    // Valida usuario y contraseña, y devuelve un token
     public AuthResponseDTO login(LoginRequestDTO request) {
-        // Mismo mensaje si falla el usuario o la contraseña, para no dar pistas
-        Usuario usuario = usuarioRepository.findByUsername(request.getUsername().trim())
+        Usuario usuario = usuarioRepository.findByUsername(request.getEmail().trim().toLowerCase())
                 .orElseThrow(() -> new BadCredentialsException("Usuario o contraseña incorrectos"));
 
         if (!passwordEncoder.matches(request.getPassword(), usuario.getPasswordHash()))
@@ -70,7 +72,6 @@ public class AuthService {
         return crearRespuesta(usuario);
     }
 
-    // Datos del usuario que inició sesión (se obtiene del token)
     public PerfilResponseDTO perfil(Usuario usuario) {
         Persona persona = usuario.getPersona();
         return PerfilResponseDTO.builder()

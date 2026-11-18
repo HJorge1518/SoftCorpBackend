@@ -1,5 +1,9 @@
 package com.softcorp.SoftCorpBackend.exception;
 
+import com.softcorp.SoftCorpBackend.util.ErrorResponse;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -8,48 +12,87 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
-// Convierte los errores en respuestas JSON con un mensaje claro
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Usuario o contraseña incorrectos -> 401
     @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<Map<String, Object>> handleAuthentication(AuthenticationException ex) {
-        return error(HttpStatus.UNAUTHORIZED, ex.getMessage());
+    public ResponseEntity<ErrorResponse> handleAuthentication(AuthenticationException ex) {
+        return build(HttpStatus.UNAUTHORIZED, ex.getMessage(), null, null);
     }
 
-    // Datos duplicados o rol no válido -> 400
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<ErrorResponse> handleExpiredJwt(ExpiredJwtException ex) {
+        return build(HttpStatus.UNAUTHORIZED, "El token JWT ha expirado", null, null);
+    }
+
+    @ExceptionHandler(JwtException.class)
+    public ResponseEntity<ErrorResponse> handleJwt(JwtException ex) {
+        return build(HttpStatus.UNAUTHORIZED, "Token JWT inválido: " + ex.getMessage(), null, null);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrity(DataIntegrityViolationException ex) {
+        String detail = ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage();
+        String message = "No se puede completar la operación por una restricción de integridad en la base de datos.";
+        if (detail != null && detail.contains("violates foreign key constraint")) {
+            message = "No se puede eliminar ni modificar el registro porque está siendo referenciado en otras tablas.";
+        } else if (detail != null && detail.contains("violates unique constraint")) {
+            message = "Ya existe un registro con el mismo valor único en el sistema.";
+        }
+        return build(HttpStatus.BAD_REQUEST, message, detail, null);
+    }
+
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity<ErrorResponse> handleNoSuchElement(NoSuchElementException ex) {
+        String msg = ex.getMessage() != null && !ex.getMessage().isBlank()
+                ? ex.getMessage() : "El recurso solicitado no fue encontrado.";
+        return build(HttpStatus.NOT_FOUND, msg, null, null);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
-        return error(HttpStatus.BAD_REQUEST, ex.getMessage());
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), null, null);
     }
 
-    // Campos obligatorios vacíos (@NotBlank, @Size...) -> 400
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
+        Map<String, String> fieldErrors = new LinkedHashMap<>();
+        ex.getBindingResult().getFieldErrors()
+                .forEach(e -> fieldErrors.putIfAbsent(e.getField(), e.getDefaultMessage()));
+
         String mensaje = ex.getBindingResult().getFieldErrors().stream()
                 .map(e -> e.getDefaultMessage())
                 .findFirst()
                 .orElse("Datos inválidos");
-        return error(HttpStatus.BAD_REQUEST, mensaje);
+        return build(HttpStatus.BAD_REQUEST, mensaje, null, fieldErrors);
     }
 
-    // JSON mal escrito en el cuerpo de la petición -> 400
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<Map<String, Object>> handleBadJson(HttpMessageNotReadableException ex) {
-        return error(HttpStatus.BAD_REQUEST, "El cuerpo de la petición no es un JSON válido");
+    public ResponseEntity<ErrorResponse> handleBadJson(HttpMessageNotReadableException ex) {
+        return build(HttpStatus.BAD_REQUEST, "El cuerpo de la petición no es un JSON válido", null, null);
     }
 
-    private ResponseEntity<Map<String, Object>> error(HttpStatus status, String mensaje) {
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
-        body.put("status", status.value());
-        body.put("error", status.getReasonPhrase());
-        body.put("message", mensaje);
-        return ResponseEntity.status(status).body(body);
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGeneral(Exception ex) {
+        String msg = ex.getMessage() != null ? ex.getMessage() : "Error interno del servidor";
+        String detail = ex.getCause() != null ? ex.getCause().getMessage() : null;
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, msg, detail, null);
+    }
+
+    private ResponseEntity<ErrorResponse> build(HttpStatus status, String message,
+                                                String detail, Map<String, String> errors) {
+        return ResponseEntity.status(status).body(
+                ErrorResponse.builder()
+                        .status(status.value())
+                        .error(status.getReasonPhrase())
+                        .message(message)
+                        .detail(detail)
+                        .errors(errors)
+                        .build()
+        );
     }
 }

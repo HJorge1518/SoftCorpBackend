@@ -8,24 +8,34 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
 import java.util.List;
 
-// Se ejecuta en cada petición: si trae un token válido, identifica al usuario
 @Component
-@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UsuarioRepository usuarioRepository;
+    private final HandlerExceptionResolver handlerExceptionResolver;
+
+    public JwtAuthenticationFilter(
+            JwtUtil jwtUtil,
+            UsuarioRepository usuarioRepository,
+            @Qualifier("handlerExceptionResolver") @Lazy HandlerExceptionResolver handlerExceptionResolver) {
+        this.jwtUtil = jwtUtil;
+        this.usuarioRepository = usuarioRepository;
+        this.handlerExceptionResolver = handlerExceptionResolver;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -46,17 +56,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Usuario usuario = usuarioRepository.findByUsername(username).orElse(null);
 
                 if (usuario != null && jwtUtil.isTokenValid(jwt, usuario)) {
-                    // El rol se guarda como permiso, ej. ROLE_JEFE
                     var permisos = List.of(new SimpleGrantedAuthority("ROLE_" + usuario.getRol().getCodigo()));
                     var authToken = new UsernamePasswordAuthenticationToken(usuario, null, permisos);
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
-        } catch (JwtException | IllegalArgumentException e) {
-            // Token vencido o inválido: la petición sigue sin usuario y,
-            // si la ruta es protegida, Spring Security responde 401
+        } catch (JwtException | IllegalArgumentException ex) {
             SecurityContextHolder.clearContext();
+            handlerExceptionResolver.resolveException(request, response, null, ex);
+            return;
         }
 
         filterChain.doFilter(request, response);
