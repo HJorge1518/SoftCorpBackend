@@ -24,6 +24,27 @@ public class IncidenciaService {
     public List<IncidenciaResponse> listar() {
         return IncidenciaResponse.fromEntities(incidenciaRepository.findAllByOrderByIdIncidenciaDesc());
     }
+    // HU06: bandeja "Mis tareas" del técnico autenticado
+    @Transactional(readOnly = true)
+    public List<IncidenciaResponse> misTareas(Usuario tecnico, String estado) {
+        String estadoFiltro = null;
+        if (estado != null && !estado.isBlank()) {
+            estadoFiltro = estado.trim().toUpperCase();
+            if (!Incidencia.PENDIENTE.equals(estadoFiltro) && !Incidencia.SOLUCIONADO.equals(estadoFiltro)) {
+                throw new IllegalArgumentException("El estado debe ser PENDIENTE o SOLUCIONADO");
+            }
+        }
+        return IncidenciaResponse.fromEntities(
+                incidenciaRepository.findMisTareas(tecnico.getId(), estadoFiltro));
+    }
+
+    // HU06: detalle de una incidencia
+    @Transactional(readOnly = true)
+    public IncidenciaResponse obtenerPorId(Long idIncidencia) {
+        Incidencia incidencia = incidenciaRepository.findById(idIncidencia)
+                .orElseThrow(() -> new IllegalArgumentException("La incidencia no existe"));
+        return IncidenciaResponse.fromEntity(incidencia);
+    }
 
     // HU04: registrar la incidencia que reportó un usuario por email o teléfono
     @Transactional
@@ -83,4 +104,5 @@ public class IncidenciaService {
                 })
                 .toList();
     }
+
 }
