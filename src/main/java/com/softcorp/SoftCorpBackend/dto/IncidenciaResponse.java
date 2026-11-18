@@ -26,7 +26,9 @@ public class IncidenciaResponse {
     private String tecnico;             // nombre del técnico (null si no está asignada)
     private LocalDateTime fechaAsignacion;
     private String estado;
-
+    private String ubicacionEquipo;     // OFICINA_USUARIO o AREA_SOPORTE
+    private LocalDateTime fechaTraslado;
+    private LocalDateTime fechaSolucion;
     public static IncidenciaResponse fromEntity(Incidencia incidencia) {
         Usuario tecnico = incidencia.getTecnico();
         return IncidenciaResponse.builder()
@@ -43,6 +45,9 @@ public class IncidenciaResponse {
                 .tecnico(tecnico != null ? nombreCompleto(tecnico) : null)
                 .fechaAsignacion(incidencia.getFechaAsignacion())
                 .estado(incidencia.getEstado())
+                .ubicacionEquipo(incidencia.getUbicacionEquipo())
+                .fechaTraslado(incidencia.getFechaTraslado())
+                .fechaSolucion(incidencia.getFechaSolucion())
                 .build();
     }
 

@@ -19,6 +19,9 @@ public class Incidencia {
     public static final String PENDIENTE = "PENDIENTE";
     public static final String SOLUCIONADO = "SOLUCIONADO";
 
+    //Ubicacion del equipo
+    public static final String UBICACION_OFICINA = "OFICINA_USUARIO";
+    public static final String UBICACION_SOPORTE = "AREA_SOPORTE";
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_incidencia")
@@ -59,4 +62,15 @@ public class Incidencia {
 
     @Column(nullable = false, length = 20)
     private String estado;
+
+    //Sprint 3: donde esta el equipo y cuando se traslado o se solucionó
+    @Builder.Default
+    @Column(name = "ubicacion_equipo",nullable = false, length = 30)
+    private String ubicacionEquipo = UBICACION_OFICINA;
+
+    @Column(name = "fecha_traslado")
+    private LocalDateTime fechaTraslado;
+
+    @Column(name = "fecha_solucion")
+    private LocalDateTime fechaSolucion;
 }

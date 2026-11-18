@@ -37,6 +37,7 @@ public class IncidenciaService {
                 .fechaRegistro(LocalDateTime.now())     // fecha y hora del registro
                 .registradoPor(registradoPor)           // usuario que inició sesión
                 .estado(Incidencia.PENDIENTE)
+                .ubicacionEquipo(Incidencia.UBICACION_OFICINA)
                 .build();
         return IncidenciaResponse.fromEntity(incidenciaRepository.save(incidencia));
     }
