@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-// Rol del usuario: JEFE, TECNICO o SISTEMAS
 @Entity
 @Data
 @NoArgsConstructor
@@ -24,4 +23,10 @@ public class Rol {
 
     @Column(nullable = false, unique = true)
     private String descripcion;
+
+    public Rol(Rol source) {
+        this.idRol = source.idRol;
+        this.codigo = source.codigo;
+        this.descripcion = source.descripcion;
+    }
 }

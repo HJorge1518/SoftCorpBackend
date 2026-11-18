@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-// Opción del menú del sistema (ej. "Mis tareas" -> /tareas)
 @Entity
 @Data
 @NoArgsConstructor
@@ -27,4 +26,7 @@ public class Modulo {
 
     @Column(nullable = false)
     private String activo;
+
+    @Column(name = "orden_opcion", nullable = false)
+    private Integer ordenOpcion;
 }

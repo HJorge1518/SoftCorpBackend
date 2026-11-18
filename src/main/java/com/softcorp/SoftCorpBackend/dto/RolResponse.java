@@ -1,0 +1,31 @@
+package com.softcorp.SoftCorpBackend.dto;
+
+import com.softcorp.SoftCorpBackend.model.Rol;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class RolResponse {
+    private Integer idRol;
+    private String codigo;
+    private String descripcion;
+
+    public static RolResponse fromEntity(Rol rol) {
+        return RolResponse.builder()
+                .idRol(rol.getIdRol())
+                .codigo(rol.getCodigo())
+                .descripcion(rol.getDescripcion())
+                .build();
+    }
+
+    public static List<RolResponse> fromEntities(List<Rol> roles) {
+        return roles.stream().map(RolResponse::fromEntity).toList();
+    }
+}
