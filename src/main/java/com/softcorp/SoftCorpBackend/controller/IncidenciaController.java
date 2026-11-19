@@ -24,20 +24,6 @@ public class IncidenciaController {
         return ResponseEntity.ok(incidenciaService.listar());
     }
 
-    // HU06 - Bandeja "Mis tareas" del técnico (?estado=PENDIENTE|SOLUCIONADO)
-    @GetMapping("/mis-tareas")
-    public ResponseEntity<List<IncidenciaResponse>> misTareas(
-            @AuthenticationPrincipal Usuario tecnico,
-            @RequestParam(required = false) String estado) {
-        return ResponseEntity.ok(incidenciaService.misTareas(tecnico, estado));
-    }
-
-    // HU06 - Detalle de incidencia
-    @GetMapping("/{id}")
-    public ResponseEntity<IncidenciaResponse> obtenerPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(incidenciaService.obtenerPorId(id));
-    }
-
     // HU04 - Registrar incidencia
     @PostMapping
     public ResponseEntity<IncidenciaResponse> registrar(@Valid @RequestBody IncidenciaRequest request,
@@ -64,6 +50,5 @@ public class IncidenciaController {
     public ResponseEntity<IncidenciaResponse> obtenerPorId(@PathVariable Long id) {
         return ResponseEntity.ok(incidenciaService.obtenerPorId(id));
     }
-
 
 }
