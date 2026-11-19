@@ -51,4 +51,19 @@ public class IncidenciaController {
                                                       @Valid @RequestBody AsignarTecnicoRequest request) {
         return ResponseEntity.ok(incidenciaService.asignar(id, request.getIdTecnico()));
     }
+    // HU06 - Bandeja "Mis tareas" del técnico (?estado=PENDIENTE|SOLUCIONADO)
+    @GetMapping("/mis-tareas")
+    public ResponseEntity<List<IncidenciaResponse>> misTareas(
+            @AuthenticationPrincipal Usuario tecnico,
+            @RequestParam(required = false) String estado) {
+        return ResponseEntity.ok(incidenciaService.misTareas(tecnico, estado));
+    }
+
+    // HU06 - Detalle de una incidencia
+    @GetMapping("/{id}")
+    public ResponseEntity<IncidenciaResponse> obtenerPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(incidenciaService.obtenerPorId(id));
+    }
+
+
 }
