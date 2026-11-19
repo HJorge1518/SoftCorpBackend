@@ -73,4 +73,23 @@ public class Incidencia {
 
     @Column(name = "fecha_solucion")
     private LocalDateTime fechaSolucion;
+
+
+    // Copia de la incidencia: la auditoría la usa para comparar el antes y el después
+    public Incidencia(Incidencia source) {
+        this.idIncidencia = source.idIncidencia;
+        this.codigoEquipo = source.codigoEquipo;
+        this.problema = source.problema;
+        this.usuarioResponsable = source.usuarioResponsable;
+        this.area = source.area;
+        this.medioReporte = source.medioReporte;
+        this.fechaRegistro = source.fechaRegistro;
+        this.registradoPor = source.registradoPor;
+        this.tecnico = source.tecnico;
+        this.fechaAsignacion = source.fechaAsignacion;
+        this.estado = source.estado;
+        this.ubicacionEquipo = source.ubicacionEquipo;
+        this.fechaTraslado = source.fechaTraslado;
+        this.fechaSolucion = source.fechaSolucion;
+    }
 }

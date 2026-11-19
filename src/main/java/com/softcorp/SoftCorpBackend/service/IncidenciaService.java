@@ -13,13 +13,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
+import com.softcorp.SoftCorpBackend.auditoria.AuditoriaService;
 @Service
 @RequiredArgsConstructor
 public class IncidenciaService {
     private final IncidenciaRepository incidenciaRepository;
     private final UsuarioRepository usuarioRepository;
-
+    private final AuditoriaService auditoriaService;
     @Transactional(readOnly = true)
     public List<IncidenciaResponse> listar() {
         return IncidenciaResponse.fromEntities(incidenciaRepository.findAllByOrderByIdIncidenciaDesc());
@@ -60,7 +60,13 @@ public class IncidenciaService {
                 .estado(Incidencia.PENDIENTE)
                 .ubicacionEquipo(Incidencia.UBICACION_OFICINA)
                 .build();
-        return IncidenciaResponse.fromEntity(incidenciaRepository.save(incidencia));
+        incidencia = incidenciaRepository.save(incidencia);
+
+        // Auditoría: queda registrado quién creó la incidencia, cuándo y desde dónde
+        auditoriaService.registrarCreacion(
+                "public", "incidencia", incidencia.getIdIncidencia().toString(), "Incidencias");
+
+        return IncidenciaResponse.fromEntity(incidencia);
     }
 
     // HU05: el jefe asigna la incidencia a un técnico, verificando su disponibilidad
@@ -83,9 +89,17 @@ public class IncidenciaService {
             throw new IllegalArgumentException("El técnico ya alcanzó su límite de atención ("
                     + carga + " de " + tecnico.getLimiteAtencion() + ")");
 
+        Incidencia estadoAnterior = new Incidencia(incidencia);   // foto de "antes" para la auditoría
         incidencia.setTecnico(tecnico);
         incidencia.setFechaAsignacion(LocalDateTime.now());
-        return IncidenciaResponse.fromEntity(incidenciaRepository.save(incidencia));
+        incidencia = incidenciaRepository.save(incidencia);
+
+        // Auditoría: guarda qué campos cambiaron (técnico y fecha de asignación)
+        auditoriaService.registrarActualizacion(
+                "public", "incidencia", incidencia.getIdIncidencia().toString(), "Asignación",
+                estadoAnterior, incidencia);
+
+        return IncidenciaResponse.fromEntity(incidencia);
     }
 
     // Carga de cada técnico frente a su límite de atención
