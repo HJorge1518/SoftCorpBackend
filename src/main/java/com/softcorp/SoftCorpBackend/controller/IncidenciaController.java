@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-// Los permisos por rol de estas rutas están en SecurityConfig
 @RestController
 @RequestMapping("/api/v1/incidencias")
 @RequiredArgsConstructor
@@ -25,14 +24,28 @@ public class IncidenciaController {
         return ResponseEntity.ok(incidenciaService.listar());
     }
 
-    // HU04 - Registrar incidencia (cualquier miembro del área)
+    // HU06 - Bandeja "Mis tareas" del técnico (?estado=PENDIENTE|SOLUCIONADO)
+    @GetMapping("/mis-tareas")
+    public ResponseEntity<List<IncidenciaResponse>> misTareas(
+            @AuthenticationPrincipal Usuario tecnico,
+            @RequestParam(required = false) String estado) {
+        return ResponseEntity.ok(incidenciaService.misTareas(tecnico, estado));
+    }
+
+    // HU06 - Detalle de incidencia
+    @GetMapping("/{id}")
+    public ResponseEntity<IncidenciaResponse> obtenerPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(incidenciaService.obtenerPorId(id));
+    }
+
+    // HU04 - Registrar incidencia
     @PostMapping
     public ResponseEntity<IncidenciaResponse> registrar(@Valid @RequestBody IncidenciaRequest request,
                                                         @AuthenticationPrincipal Usuario usuario) {
         return ResponseEntity.ok(incidenciaService.registrar(request, usuario));
     }
 
-    // HU05 - Asignar incidencia a un técnico (solo el jefe del área)
+    // HU05 - Asignar incidencia a técnico (solo JEFE)
     @PutMapping("/{id}/asignar")
     public ResponseEntity<IncidenciaResponse> asignar(@PathVariable Long id,
                                                       @Valid @RequestBody AsignarTecnicoRequest request) {

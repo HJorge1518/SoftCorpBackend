@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-// Problema reportado por un usuario de la empresa sobre su equipo
 @Entity
 @Data
 @NoArgsConstructor
@@ -18,6 +17,9 @@ import java.time.LocalDateTime;
 public class Incidencia {
     public static final String PENDIENTE = "PENDIENTE";
     public static final String SOLUCIONADO = "SOLUCIONADO";
+
+    public static final String UBICACION_OFICINA = "OFICINA_USUARIO";
+    public static final String UBICACION_SOPORTE = "AREA_SOPORTE";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,26 +32,22 @@ public class Incidencia {
     @Column(nullable = false, length = 300)
     private String problema;
 
-    // Nombre del usuario responsable del equipo
     @Column(name = "usuario_responsable", nullable = false, length = 150)
     private String usuarioResponsable;
 
     @Column(length = 100)
     private String area;
 
-    // EMAIL o TELEFONO
     @Column(name = "medio_reporte", nullable = false, length = 20)
     private String medioReporte;
 
     @Column(name = "fecha_registro", nullable = false, updatable = false)
     private LocalDateTime fechaRegistro;
 
-    // Quién registró la incidencia en el sistema
     @ManyToOne
     @JoinColumn(name = "id_registrado_por", nullable = false)
     private Usuario registradoPor;
 
-    // Técnico responsable (null mientras no se asigne)
     @ManyToOne
     @JoinColumn(name = "id_tecnico")
     private Usuario tecnico;
@@ -59,4 +57,31 @@ public class Incidencia {
 
     @Column(nullable = false, length = 20)
     private String estado;
+
+    @Builder.Default
+    @Column(name = "ubicacion_equipo", nullable = false, length = 30)
+    private String ubicacionEquipo = UBICACION_OFICINA;
+
+    @Column(name = "fecha_traslado")
+    private LocalDateTime fechaTraslado;
+
+    @Column(name = "fecha_solucion")
+    private LocalDateTime fechaSolucion;
+
+    public Incidencia(Incidencia source) {
+        this.idIncidencia = source.idIncidencia;
+        this.codigoEquipo = source.codigoEquipo;
+        this.problema = source.problema;
+        this.usuarioResponsable = source.usuarioResponsable;
+        this.area = source.area;
+        this.medioReporte = source.medioReporte;
+        this.fechaRegistro = source.fechaRegistro;
+        this.registradoPor = source.registradoPor;
+        this.tecnico = source.tecnico;
+        this.fechaAsignacion = source.fechaAsignacion;
+        this.estado = source.estado;
+        this.ubicacionEquipo = source.ubicacionEquipo;
+        this.fechaTraslado = source.fechaTraslado;
+        this.fechaSolucion = source.fechaSolucion;
+    }
 }

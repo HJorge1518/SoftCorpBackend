@@ -1,5 +1,6 @@
 package com.softcorp.SoftCorpBackend.service;
 
+import com.softcorp.SoftCorpBackend.auditoria.AuditoriaService;
 import com.softcorp.SoftCorpBackend.dto.IncidenciaRequest;
 import com.softcorp.SoftCorpBackend.dto.IncidenciaResponse;
 import com.softcorp.SoftCorpBackend.dto.TecnicoDisponibilidadResponse;
@@ -19,29 +20,59 @@ import java.util.List;
 public class IncidenciaService {
     private final IncidenciaRepository incidenciaRepository;
     private final UsuarioRepository usuarioRepository;
+    private final AuditoriaService auditoriaService;
 
     @Transactional(readOnly = true)
     public List<IncidenciaResponse> listar() {
         return IncidenciaResponse.fromEntities(incidenciaRepository.findAllByOrderByIdIncidenciaDesc());
     }
 
-    // HU04: registrar la incidencia que reportó un usuario por email o teléfono
+    // HU06: bandeja "Mis tareas" del técnico autenticado
+    @Transactional(readOnly = true)
+    public List<IncidenciaResponse> misTareas(Usuario tecnico, String estado) {
+        String estadoFiltro = null;
+        if (estado != null && !estado.isBlank()) {
+            estadoFiltro = estado.trim().toUpperCase();
+            if (!Incidencia.PENDIENTE.equals(estadoFiltro) && !Incidencia.SOLUCIONADO.equals(estadoFiltro)) {
+                throw new IllegalArgumentException("El estado debe ser PENDIENTE o SOLUCIONADO");
+            }
+        }
+        return IncidenciaResponse.fromEntities(
+                incidenciaRepository.findMisTareas(tecnico.getId(), estadoFiltro));
+    }
+
+    // HU06: detalle de incidencia
+    @Transactional(readOnly = true)
+    public IncidenciaResponse obtenerPorId(Long idIncidencia) {
+        Incidencia incidencia = incidenciaRepository.findById(idIncidencia)
+                .orElseThrow(() -> new IllegalArgumentException("La incidencia no existe"));
+        return IncidenciaResponse.fromEntity(incidencia);
+    }
+
+    // HU04: registrar incidencia
     @Transactional
     public IncidenciaResponse registrar(IncidenciaRequest request, Usuario registradoPor) {
         Incidencia incidencia = Incidencia.builder()
                 .codigoEquipo(request.getCodigoEquipo().trim().toUpperCase())
                 .problema(request.getProblema().trim())
                 .usuarioResponsable(request.getUsuarioResponsable().trim())
-                .area(request.getArea() != null ? request.getArea().trim() : null)
+                .area(request.getArea() != null && !request.getArea().isBlank()
+                        ? request.getArea().trim() : null)
                 .medioReporte(request.getMedioReporte())
-                .fechaRegistro(LocalDateTime.now())     // fecha y hora del registro
-                .registradoPor(registradoPor)           // usuario que inició sesión
+                .fechaRegistro(LocalDateTime.now())
+                .registradoPor(registradoPor)
                 .estado(Incidencia.PENDIENTE)
+                .ubicacionEquipo(Incidencia.UBICACION_OFICINA)
                 .build();
-        return IncidenciaResponse.fromEntity(incidenciaRepository.save(incidencia));
+        incidencia = incidenciaRepository.save(incidencia);
+
+        auditoriaService.registrarCreacion(
+                "public", "incidencia", incidencia.getIdIncidencia().toString(), "Incidencias");
+
+        return IncidenciaResponse.fromEntity(incidencia);
     }
 
-    // HU05: el jefe asigna la incidencia a un técnico, verificando su disponibilidad
+    // HU05: asignar técnico
     @Transactional
     public IncidenciaResponse asignar(Long idIncidencia, Long idTecnico) {
         Incidencia incidencia = incidenciaRepository.findById(idIncidencia)
@@ -61,12 +92,18 @@ public class IncidenciaService {
             throw new IllegalArgumentException("El técnico ya alcanzó su límite de atención ("
                     + carga + " de " + tecnico.getLimiteAtencion() + ")");
 
+        Incidencia estadoAnterior = new Incidencia(incidencia);
         incidencia.setTecnico(tecnico);
         incidencia.setFechaAsignacion(LocalDateTime.now());
-        return IncidenciaResponse.fromEntity(incidenciaRepository.save(incidencia));
+        incidencia = incidenciaRepository.save(incidencia);
+
+        auditoriaService.registrarActualizacion(
+                "public", "incidencia", incidencia.getIdIncidencia().toString(), "Asignación",
+                estadoAnterior, incidencia);
+
+        return IncidenciaResponse.fromEntity(incidencia);
     }
 
-    // Carga de cada técnico frente a su límite de atención
     @Transactional(readOnly = true)
     public List<TecnicoDisponibilidadResponse> disponibilidadTecnicos() {
         return usuarioRepository.findByRolCodigoOrderByIdAsc("TECNICO").stream()

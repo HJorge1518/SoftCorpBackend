@@ -9,23 +9,25 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.List;
 
-// Incidencia tal como se envía al frontend
 @Data
 @Builder
 public class IncidenciaResponse {
     private Long idIncidencia;
-    private String codigo;              // ej. INC-0007
+    private String codigo;
     private String codigoEquipo;
     private String problema;
     private String usuarioResponsable;
     private String area;
     private String medioReporte;
     private LocalDateTime fechaRegistro;
-    private String registradoPor;       // nombre de quien la registró
+    private String registradoPor;
     private Long idTecnico;
-    private String tecnico;             // nombre del técnico (null si no está asignada)
+    private String tecnico;
     private LocalDateTime fechaAsignacion;
     private String estado;
+    private String ubicacionEquipo;
+    private LocalDateTime fechaTraslado;
+    private LocalDateTime fechaSolucion;
 
     public static IncidenciaResponse fromEntity(Incidencia incidencia) {
         Usuario tecnico = incidencia.getTecnico();
@@ -43,6 +45,9 @@ public class IncidenciaResponse {
                 .tecnico(tecnico != null ? nombreCompleto(tecnico) : null)
                 .fechaAsignacion(incidencia.getFechaAsignacion())
                 .estado(incidencia.getEstado())
+                .ubicacionEquipo(incidencia.getUbicacionEquipo())
+                .fechaTraslado(incidencia.getFechaTraslado())
+                .fechaSolucion(incidencia.getFechaSolucion())
                 .build();
     }
 
@@ -50,7 +55,6 @@ public class IncidenciaResponse {
         return incidencias.stream().map(IncidenciaResponse::fromEntity).toList();
     }
 
-    // Ej. "Luis Mendoza"
     static String nombreCompleto(Usuario usuario) {
         Persona persona = usuario.getPersona();
         return persona.getNombres() + " " + persona.getApellidoPaterno();
