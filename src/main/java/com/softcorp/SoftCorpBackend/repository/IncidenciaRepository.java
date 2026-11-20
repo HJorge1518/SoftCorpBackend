@@ -63,17 +63,18 @@ public interface IncidenciaRepository extends JpaRepository<Incidencia, Long> {
             """, nativeQuery = true)
     List<Object[]> evolucionDiaria();
 
-    // PC3 Chart (Polar Area / Doughnut): rendimiento por técnico
+    // PC3 Chart (Heatmap): rendimiento por técnico
     @Query(value = """
             SELECT p.nombres || ' ' || p.apellido_paterno AS tecnico,
                    COUNT(*) FILTER (WHERE i.estado = 'PENDIENTE') AS pendientes,
-                   COUNT(*) FILTER (WHERE i.estado = 'SOLUCIONADO') AS solucionadas
+                   COUNT(*) FILTER (WHERE i.estado = 'SOLUCIONADO') AS solucionadas,
+                   u.limite_atencion AS limite_atencion
             FROM usuario u
             JOIN rol r ON u.id_rol = r.id_rol
             JOIN persona p ON u.id_persona = p.id_persona
             LEFT JOIN incidencia i ON i.id_tecnico = u.id_usuario
             WHERE r.codigo = 'TECNICO'
-            GROUP BY u.id_usuario, p.nombres, p.apellido_paterno
+            GROUP BY u.id_usuario, p.nombres, p.apellido_paterno, u.limite_atencion
             ORDER BY u.id_usuario
             """, nativeQuery = true)
     List<Object[]> rendimientoPorTecnico();

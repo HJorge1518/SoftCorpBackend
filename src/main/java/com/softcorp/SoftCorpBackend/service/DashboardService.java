@@ -3,6 +3,7 @@ package com.softcorp.SoftCorpBackend.service;
 import com.softcorp.SoftCorpBackend.dto.ChartItemDTO;
 import com.softcorp.SoftCorpBackend.dto.ChartSerieEstadoDTO;
 import com.softcorp.SoftCorpBackend.dto.DashboardResumenDTO;
+import com.softcorp.SoftCorpBackend.dto.RendimientoTecnicoDTO;
 import com.softcorp.SoftCorpBackend.model.Incidencia;
 import com.softcorp.SoftCorpBackend.model.SolicitudRepuesto;
 import com.softcorp.SoftCorpBackend.repository.DiccionarioFallaRepository;
@@ -58,13 +59,20 @@ public class DashboardService {
     }
 
     @Transactional(readOnly = true)
-    public List<ChartSerieEstadoDTO> rendimientoTecnicos() {
+    public List<RendimientoTecnicoDTO> rendimientoTecnicos() {
         return incidenciaRepository.rendimientoPorTecnico().stream()
-                .map(row -> ChartSerieEstadoDTO.builder()
-                        .categoria(String.valueOf(row[0]))
-                        .pendientes(((Number) row[1]).longValue())
-                        .solucionadas(((Number) row[2]).longValue())
-                        .build())
+                .map(row -> {
+                    long pendientes = ((Number) row[1]).longValue();
+                    long solucionadas = ((Number) row[2]).longValue();
+                    long limiteAtencion = ((Number) row[3]).longValue();
+                    return RendimientoTecnicoDTO.builder()
+                            .tecnico(String.valueOf(row[0]))
+                            .pendientes(pendientes)
+                            .solucionadas(solucionadas)
+                            .limiteAtencion(limiteAtencion)
+                            .totalAsignadas(pendientes + solucionadas)
+                            .build();
+                })
                 .toList();
     }
 
