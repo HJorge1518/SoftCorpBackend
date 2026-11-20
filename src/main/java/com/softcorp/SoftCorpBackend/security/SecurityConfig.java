@@ -40,7 +40,7 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .cors(Customizer.withDefaults())
             .authorizeHttpRequests(auth -> auth
-                // Rutas públicas (SIGCON + SoftCorp)
+                // Rutas públicas (SoftCorp)
                 .requestMatchers("/", "/actuator/health", "/actuator/health/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/docs/**").permitAll()
