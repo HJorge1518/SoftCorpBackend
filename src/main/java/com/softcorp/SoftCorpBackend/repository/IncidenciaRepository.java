@@ -78,4 +78,26 @@ public interface IncidenciaRepository extends JpaRepository<Incidencia, Long> {
             ORDER BY u.id_usuario
             """, nativeQuery = true)
     List<Object[]> rendimientoPorTecnico();
+
+
+    // HU10: equipos con problemas complicados = incidencias PENDIENTES que
+    // fueron trasladadas al área de soporte o esperan un repuesto (SOLICITADO).
+    // :idTecnico IS NULL → si no se filtra por técnico, trae todas.
+    @Query("""
+            SELECT i FROM Incidencia i
+            LEFT JOIN i.tecnico t
+            WHERE i.estado = 'PENDIENTE'
+              AND (:idTecnico IS NULL OR t.id = :idTecnico)
+              AND (i.ubicacionEquipo = 'AREA_SOPORTE'
+                   OR EXISTS (SELECT s FROM SolicitudRepuesto s
+                              WHERE s.incidencia = i AND s.estado = 'SOLICITADO'))
+            ORDER BY i.fechaRegistro ASC
+            """)
+    List<Incidencia> findEquiposComplicados(@Param("idTecnico") Long idTecnico);
+
+
+
+
+
+
 }

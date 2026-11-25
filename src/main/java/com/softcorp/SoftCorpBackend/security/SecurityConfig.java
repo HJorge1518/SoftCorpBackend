@@ -62,8 +62,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/diccionario-fallas").hasRole("TECNICO")
                 .requestMatchers(HttpMethod.PUT, "/api/v1/diccionario-fallas/**").hasRole("TECNICO")
                 .requestMatchers(HttpMethod.DELETE, "/api/v1/diccionario-fallas/**").hasAnyRole("JEFE", "TECNICO")
+                    // Sprint 4: reportes del jefe (HU10, HU11)
+                    .requestMatchers("/api/v1/reportes/**").hasRole("JEFE")
 
-                .anyRequest().authenticated()
+                    .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .exceptionHandling(ex -> ex
