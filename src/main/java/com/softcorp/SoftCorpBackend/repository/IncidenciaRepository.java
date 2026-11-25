@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
@@ -96,6 +97,22 @@ public interface IncidenciaRepository extends JpaRepository<Incidencia, Long> {
     List<Incidencia> findEquiposComplicados(@Param("idTecnico") Long idTecnico);
 
 
+    // HU11: equipos solucionados por día y por técnico, dentro de un rango de fechas.
+    // Cada fila: [día, técnico, cantidad]
+    @Query(value = """
+            SELECT DATE(i.fecha_solucion) AS dia,
+                   p.nombres || ' ' || p.apellido_paterno AS tecnico,
+                   COUNT(*) AS cantidad
+            FROM incidencia i
+            JOIN usuario u ON i.id_tecnico = u.id_usuario
+            JOIN persona p ON u.id_persona = p.id_persona
+            WHERE i.estado = 'SOLUCIONADO'
+              AND DATE(i.fecha_solucion) BETWEEN :desde AND :hasta
+            GROUP BY DATE(i.fecha_solucion), p.nombres, p.apellido_paterno
+            ORDER BY dia, tecnico
+            """, nativeQuery = true)
+    List<Object[]> countSolucionadasPorDiaYTecnico(@Param("desde") LocalDate desde,
+                                                   @Param("hasta") LocalDate hasta);
 
 
 

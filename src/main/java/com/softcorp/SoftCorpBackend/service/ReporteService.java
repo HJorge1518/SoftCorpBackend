@@ -1,6 +1,7 @@
 package com.softcorp.SoftCorpBackend.service;
 
 import com.softcorp.SoftCorpBackend.dto.EquipoComplicadoResponse;
+import com.softcorp.SoftCorpBackend.dto.SolucionadasPorDiaResponse;
 import com.softcorp.SoftCorpBackend.model.Incidencia;
 import com.softcorp.SoftCorpBackend.model.SolicitudRepuesto;
 import com.softcorp.SoftCorpBackend.model.Usuario;
@@ -40,7 +41,24 @@ public class ReporteService {
                         || (ESPERA_REPUESTO.equals(filtro) && e.isEsperaRepuesto()))
                 .toList();
     }
+    // HU11: equipos solucionados por día y por técnico en un rango de fechas.
+    // Si no se envían fechas, se usan los últimos 7 días.
+    @Transactional(readOnly = true)
+    public List<SolucionadasPorDiaResponse> solucionadasPorDia(LocalDate desde, LocalDate hasta) {
+        if (hasta == null) hasta = LocalDate.now();
+        if (desde == null) desde = hasta.minusDays(6);
+        if (desde.isAfter(hasta)) {
+            throw new IllegalArgumentException("La fecha 'desde' no puede ser posterior a 'hasta'");
+        }
 
+        return incidenciaRepository.countSolucionadasPorDiaYTecnico(desde, hasta).stream()
+                .map(row -> SolucionadasPorDiaResponse.builder()
+                        .fecha((LocalDate) row[0])                  // Hibernate entrega el DATE como LocalDate
+                        .tecnico(String.valueOf(row[1]))
+                        .cantidad(((Number) row[2]).longValue())
+                        .build())
+                .toList();
+    }
     // Convierte la incidencia en una fila del reporte y calcula lo que no está en la tabla
     private EquipoComplicadoResponse aRespuesta(Incidencia i, LocalDate hoy) {
         boolean trasladado = Incidencia.UBICACION_SOPORTE.equals(i.getUbicacionEquipo());

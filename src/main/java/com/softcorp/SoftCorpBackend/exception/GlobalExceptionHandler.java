@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
-
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -95,4 +95,11 @@ public class GlobalExceptionHandler {
                         .build()
         );
     }
+    // Un parámetro de la URL con formato inválido (ej. fecha "30-11-2026" o un id con letras) → 400
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        return build(HttpStatus.BAD_REQUEST,
+                "El parámetro '" + ex.getName() + "' tiene un formato inválido", null, null);
+    }
+
 }
