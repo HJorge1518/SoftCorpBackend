@@ -167,12 +167,12 @@ WHERE NOT EXISTS (SELECT 1 FROM incidencia WHERE codigo_equipo = 'PC-ADM-019');
 -- Solicitudes de repuesto (HU07)
 INSERT INTO solicitud_repuesto (id_incidencia, id_tecnico, codigo_repuesto, nombre_repuesto,
                                 cantidad, justificacion, trasladar_equipo, fecha_traslado, estado, fecha_respuesta)
-SELECT (SELECT id_incidencia FROM incidencia WHERE codigo_equipo = 'PC-CONT-005'),
+SELECT (SELECT id_incidencia FROM incidencia WHERE codigo_equipo = 'PC-CONT-005' AND problema = 'Fuente de poder quemada' LIMIT 1),
        (SELECT id_usuario FROM usuario WHERE username = 'tecnico@sc.pe'),
        'REP-PSU-001', 'Fuente de poder ATX 500W', 1,
        'La fuente original no enciende tras corte eléctrico', TRUE,
        CURRENT_TIMESTAMP - INTERVAL '4 days', 'RECIBIDO', CURRENT_TIMESTAMP - INTERVAL '3 days'
-WHERE EXISTS (SELECT 1 FROM incidencia WHERE codigo_equipo = 'PC-CONT-005')
+WHERE EXISTS (SELECT 1 FROM incidencia WHERE codigo_equipo = 'PC-CONT-005' AND problema = 'Fuente de poder quemada')
   AND NOT EXISTS (SELECT 1 FROM solicitud_repuesto WHERE codigo_repuesto = 'REP-PSU-001');
 
 INSERT INTO solicitud_repuesto (id_incidencia, id_tecnico, codigo_repuesto, nombre_repuesto,
@@ -199,14 +199,103 @@ WHERE EXISTS (SELECT 1 FROM incidencia WHERE codigo_equipo = 'PC-FIN-021')
 
 INSERT INTO informe_tecnico (id_incidencia, id_tecnico, diagnostico, solucion_aplicada,
                              piezas_cambiadas, lugar_solucion, fecha_informe)
-SELECT (SELECT id_incidencia FROM incidencia WHERE codigo_equipo = 'PC-CONT-005'),
+SELECT (SELECT id_incidencia FROM incidencia WHERE codigo_equipo = 'PC-CONT-005' ORDER BY id_incidencia LIMIT 1),
        (SELECT id_usuario FROM usuario WHERE username = 'tecnico@sc.pe'),
        'Fuente de poder sin voltaje de salida en riel de 12V',
        'Se trasladó el CPU a soporte, se reemplazó la fuente y se probó estabilidad',
        'Fuente de poder ATX 500W (REP-PSU-001)', 'AREA_SOPORTE', CURRENT_TIMESTAMP - INTERVAL '3 days'
 WHERE EXISTS (SELECT 1 FROM incidencia WHERE codigo_equipo = 'PC-CONT-005')
   AND NOT EXISTS (SELECT 1 FROM informe_tecnico
-                  WHERE id_incidencia = (SELECT id_incidencia FROM incidencia WHERE codigo_equipo = 'PC-CONT-005'));
+                  WHERE id_incidencia = (SELECT id_incidencia FROM incidencia WHERE codigo_equipo = 'PC-CONT-005' ORDER BY id_incidencia LIMIT 1));
+
+-- Historial adicional para PC-CONT-005 (HU12: equipo con 3 fallas para demostrar reemplazoSugerido)
+INSERT INTO incidencia (codigo_equipo, problema, usuario_responsable, area, medio_reporte,
+                        fecha_registro, id_registrado_por, id_tecnico, fecha_asignacion,
+                        estado, ubicacion_equipo, fecha_traslado, fecha_solucion)
+SELECT 'PC-CONT-005', 'Sectores dañados en disco principal y errores de lectura', 'Marcos Díaz', 'Contabilidad', 'TELEFONO',
+       CURRENT_TIMESTAMP - INTERVAL '20 days',
+       (SELECT id_usuario FROM usuario WHERE username = 'sistemas@sc.pe'),
+       (SELECT id_usuario FROM usuario WHERE username = 'atorres@sc.pe'),
+       CURRENT_TIMESTAMP - INTERVAL '20 days',
+       'SOLUCIONADO', 'AREA_SOPORTE', CURRENT_TIMESTAMP - INTERVAL '19 days', CURRENT_TIMESTAMP - INTERVAL '18 days'
+WHERE NOT EXISTS (
+    SELECT 1 FROM incidencia
+    WHERE codigo_equipo = 'PC-CONT-005' AND problema = 'Sectores dañados en disco principal y errores de lectura'
+);
+
+INSERT INTO incidencia (codigo_equipo, problema, usuario_responsable, area, medio_reporte,
+                        fecha_registro, id_registrado_por, id_tecnico, fecha_asignacion,
+                        estado, ubicacion_equipo, fecha_solucion)
+SELECT 'PC-CONT-005', 'Sobrecalentamiento y apagado repentino del CPU', 'Marcos Díaz', 'Contabilidad', 'EMAIL',
+       CURRENT_TIMESTAMP - INTERVAL '12 days',
+       (SELECT id_usuario FROM usuario WHERE username = 'jefe@sc.pe'),
+       (SELECT id_usuario FROM usuario WHERE username = 'tecnico@sc.pe'),
+       CURRENT_TIMESTAMP - INTERVAL '12 days',
+       'SOLUCIONADO', 'OFICINA_USUARIO', CURRENT_TIMESTAMP - INTERVAL '11 days'
+WHERE NOT EXISTS (
+    SELECT 1 FROM incidencia
+    WHERE codigo_equipo = 'PC-CONT-005' AND problema = 'Sobrecalentamiento y apagado repentino del CPU'
+);
+
+INSERT INTO solicitud_repuesto (id_incidencia, id_tecnico, codigo_repuesto, nombre_repuesto,
+                                cantidad, justificacion, trasladar_equipo, fecha_traslado, estado, fecha_solicitud, fecha_respuesta)
+SELECT (SELECT id_incidencia FROM incidencia
+        WHERE codigo_equipo = 'PC-CONT-005' AND problema = 'Sectores dañados en disco principal y errores de lectura'
+        LIMIT 1),
+       (SELECT id_usuario FROM usuario WHERE username = 'atorres@sc.pe'),
+       'REP-SSD-002', 'Disco SSD NVMe 512GB', 1,
+       'El disco mecánico presenta sectores defectuosos irrecuperables', TRUE,
+       CURRENT_TIMESTAMP - INTERVAL '19 days', 'RECIBIDO',
+       CURRENT_TIMESTAMP - INTERVAL '19 days', CURRENT_TIMESTAMP - INTERVAL '18 days'
+WHERE EXISTS (
+    SELECT 1 FROM incidencia
+    WHERE codigo_equipo = 'PC-CONT-005' AND problema = 'Sectores dañados en disco principal y errores de lectura'
+)
+  AND NOT EXISTS (SELECT 1 FROM solicitud_repuesto WHERE codigo_repuesto = 'REP-SSD-002');
+
+INSERT INTO informe_tecnico (id_incidencia, id_tecnico, diagnostico, solucion_aplicada,
+                             piezas_cambiadas, lugar_solucion, fecha_informe)
+SELECT (SELECT id_incidencia FROM incidencia
+        WHERE codigo_equipo = 'PC-CONT-005' AND problema = 'Sectores dañados en disco principal y errores de lectura'
+        LIMIT 1),
+       (SELECT id_usuario FROM usuario WHERE username = 'atorres@sc.pe'),
+       'Diagnóstico SMART en estado crítico con fallos de lectura',
+       'Se trasladó a soporte, se reemplazó el disco por SSD NVMe y se clonó el sistema',
+       'Disco SSD NVMe 512GB (REP-SSD-002)', 'AREA_SOPORTE', CURRENT_TIMESTAMP - INTERVAL '18 days'
+WHERE EXISTS (
+    SELECT 1 FROM incidencia
+    WHERE codigo_equipo = 'PC-CONT-005' AND problema = 'Sectores dañados en disco principal y errores de lectura'
+)
+  AND NOT EXISTS (
+    SELECT 1 FROM informe_tecnico
+    WHERE id_incidencia = (
+        SELECT id_incidencia FROM incidencia
+        WHERE codigo_equipo = 'PC-CONT-005' AND problema = 'Sectores dañados en disco principal y errores de lectura'
+        LIMIT 1
+    )
+);
+
+INSERT INTO informe_tecnico (id_incidencia, id_tecnico, diagnostico, solucion_aplicada,
+                             piezas_cambiadas, lugar_solucion, fecha_informe)
+SELECT (SELECT id_incidencia FROM incidencia
+        WHERE codigo_equipo = 'PC-CONT-005' AND problema = 'Sobrecalentamiento y apagado repentino del CPU'
+        LIMIT 1),
+       (SELECT id_usuario FROM usuario WHERE username = 'tecnico@sc.pe'),
+       'Pasta térmica reseca y obstrucción de polvo en disipador del procesador',
+       'Limpieza interna completa y cambio de pasta térmica en oficina del usuario',
+       'Pasta térmica', 'OFICINA_USUARIO', CURRENT_TIMESTAMP - INTERVAL '11 days'
+WHERE EXISTS (
+    SELECT 1 FROM incidencia
+    WHERE codigo_equipo = 'PC-CONT-005' AND problema = 'Sobrecalentamiento y apagado repentino del CPU'
+)
+  AND NOT EXISTS (
+    SELECT 1 FROM informe_tecnico
+    WHERE id_incidencia = (
+        SELECT id_incidencia FROM incidencia
+        WHERE codigo_equipo = 'PC-CONT-005' AND problema = 'Sobrecalentamiento y apagado repentino del CPU'
+        LIMIT 1
+    )
+);
 
 -- Diccionario de fallas (HU09)
 INSERT INTO diccionario_falla (codigo_falla, titulo, categoria, sintomas, causa_probable, solucion, id_autor)

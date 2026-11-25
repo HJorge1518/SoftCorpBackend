@@ -53,11 +53,20 @@ public class ReporteService {
 
         return incidenciaRepository.countSolucionadasPorDiaYTecnico(desde, hasta).stream()
                 .map(row -> SolucionadasPorDiaResponse.builder()
-                        .fecha((LocalDate) row[0])                  // Hibernate entrega el DATE como LocalDate
+                        .fecha(aLocalDate(row[0]))
                         .tecnico(String.valueOf(row[1]))
                         .cantidad(((Number) row[2]).longValue())
                         .build())
                 .toList();
+    }
+
+    private LocalDate aLocalDate(Object valor) {
+        return switch (valor) {
+            case LocalDate ld -> ld;
+            case java.sql.Date sqlDate -> sqlDate.toLocalDate();
+            case java.sql.Timestamp ts -> ts.toLocalDateTime().toLocalDate();
+            default -> LocalDate.parse(String.valueOf(valor));
+        };
     }
     // Convierte la incidencia en una fila del reporte y calcula lo que no está en la tabla
     private EquipoComplicadoResponse aRespuesta(Incidencia i, LocalDate hoy) {
