@@ -33,4 +33,10 @@ public interface SolicitudRepuestoRepository extends JpaRepository<SolicitudRepu
             ORDER BY estado
             """, nativeQuery = true)
     List<Object[]> countPorEstado();
+
+
+    // HU12: repuestos de un equipo en un estado (ej. RECIBIDO = repuestos cambiados).
+    // Navega la relación solicitud → incidencia → codigoEquipo
+    List<SolicitudRepuesto> findByIncidenciaCodigoEquipoIgnoreCaseAndEstadoOrderByFechaSolicitudDesc(
+            String codigoEquipo, String estado);
 }

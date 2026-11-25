@@ -115,6 +115,9 @@ public interface IncidenciaRepository extends JpaRepository<Incidencia, Long> {
                                                    @Param("hasta") LocalDate hasta);
 
 
+    // HU12: todas las incidencias de un equipo, la más reciente primero
+    // (método derivado: Spring arma el SQL por el nombre; IgnoreCase = sin distinguir mayúsculas)
+    List<Incidencia> findByCodigoEquipoIgnoreCaseOrderByFechaRegistroDesc(String codigoEquipo);
 
 
 }
