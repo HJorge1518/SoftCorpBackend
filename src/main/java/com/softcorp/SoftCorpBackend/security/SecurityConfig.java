@@ -41,7 +41,7 @@ public class SecurityConfig {
             .cors(Customizer.withDefaults())
             .authorizeHttpRequests(auth -> auth
                 // Rutas públicas (SoftCorp)
-                .requestMatchers("/", "/actuator/health", "/actuator/health/**").permitAll()
+                .requestMatchers("/", "/actuator/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/docs/**").permitAll()
                 .requestMatchers("/error").permitAll()
