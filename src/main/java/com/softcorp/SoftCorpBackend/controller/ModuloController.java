@@ -18,11 +18,13 @@ public class ModuloController {
 
     private final ModuloService moduloService;
 
+    // Lista módulos activos (patrón SIGCON con POST y filtro opcional en el body)
     @PostMapping("/list")
     public ResponseEntity<?> list(@RequestBody(required = false) ModuloRequest request) {
         return ResponseEntity.ok(moduloService.list(request));
     }
 
+    // Busca un módulo por idMod devolviendo 400 si falta el ID o 404 si no existe
     @PostMapping("/find")
     public ResponseEntity<?> find(@RequestBody Optional<ModuloRequest> request) {
         if (request.isEmpty() || request.get().getIdMod() == null) {

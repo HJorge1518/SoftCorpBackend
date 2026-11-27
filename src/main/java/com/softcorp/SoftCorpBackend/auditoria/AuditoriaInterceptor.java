@@ -23,6 +23,7 @@ public class AuditoriaInterceptor implements HandlerInterceptor {
     @Value("${app.version:1.0.0}")
     private String appVersion;
 
+    // Antes de entrar al controller, carga en ThreadLocal el usuario del JWT, IP real, endpoint y un UUID de correlación
     @Override
     public boolean preHandle(HttpServletRequest request,
                              HttpServletResponse response,
@@ -59,6 +60,7 @@ public class AuditoriaInterceptor implements HandlerInterceptor {
         return true;
     }
 
+    // Quita sufijos de interfaz IPv6 (%...) y prefijos ::ffff: para que PostgreSQL acepte la IP en columna INET
     private String normalizarIp(String ip) {
         if (ip == null || ip.isBlank()) return ip;
 
@@ -82,6 +84,7 @@ public class AuditoriaInterceptor implements HandlerInterceptor {
         }
     }
 
+    // Siempre limpia el contexto al finalizar la petición (con éxito o error)
     @Override
     public void afterCompletion(HttpServletRequest request,
                                 HttpServletResponse response,

@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+// Estructura estándar de errores JSON; NON_NULL omite campos vacíos (ej. errors cuando no aplica)
 @Data
 @Builder
 @AllArgsConstructor

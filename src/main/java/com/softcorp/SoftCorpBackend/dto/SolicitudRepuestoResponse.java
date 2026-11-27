@@ -28,6 +28,7 @@ public class SolicitudRepuestoResponse {
     private LocalDateTime fechaSolicitud;
     private LocalDateTime fechaRespuesta;
 
+    // Genera códigos legibles SOL-000X / INC-000X y aplana datos del equipo y técnico
     public static SolicitudRepuestoResponse fromEntity(SolicitudRepuesto s) {
         Persona p = s.getTecnico().getPersona();
         return SolicitudRepuestoResponse.builder()

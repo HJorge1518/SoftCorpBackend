@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// Validaciones de entrada para HU09 (formato FAL-CAT-001 insensible a mayúsculas y categoría)
 @Data
 @Builder
 @NoArgsConstructor

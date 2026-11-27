@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// Módulos del menú lateral; orden_opcion y activo controlan visibilidad en el frontend
 @Entity
 @Data
 @NoArgsConstructor

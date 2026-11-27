@@ -37,7 +37,7 @@ public class IncidenciaController {
                                                       @Valid @RequestBody AsignarTecnicoRequest request) {
         return ResponseEntity.ok(incidenciaService.asignar(id, request.getIdTecnico()));
     }
-    // HU06 - Bandeja "Mis tareas" del técnico (?estado=PENDIENTE|SOLUCIONADO)
+    // HU06 - Bandeja "Mis tareas": toma el técnico directo del JWT (@AuthenticationPrincipal) para evitar suplantación
     @GetMapping("/mis-tareas")
     public ResponseEntity<List<IncidenciaResponse>> misTareas(
             @AuthenticationPrincipal Usuario tecnico,

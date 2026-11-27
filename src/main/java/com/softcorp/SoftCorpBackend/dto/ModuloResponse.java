@@ -19,6 +19,7 @@ public class ModuloResponse {
     private String activo;
     private Integer ordenOpcion;
 
+    // Proyecta la entidad Modulo hacia el DTO de salida
     public static ModuloResponse fromEntity(Modulo modulo) {
         return ModuloResponse.builder()
                 .idMod(modulo.getIdMod())

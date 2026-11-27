@@ -20,6 +20,7 @@ public class DiccionarioFallaService {
     private final DiccionarioFallaRepository fallaRepository;
     private final AuditoriaService auditoriaService;
 
+    // Arma el patrón %keyword% en Java para usar parámetro enlazado en JPQL y filtrar por categoría opcional
     @Transactional(readOnly = true)
     public List<DiccionarioFallaResponse> buscar(String keyword, String categoria) {
         String keywordPattern = (keyword == null || keyword.isBlank())
@@ -33,6 +34,7 @@ public class DiccionarioFallaService {
                 fallaRepository.buscar(keywordPattern, categoriaFiltro));
     }
 
+    // Obtiene una entrada puntual del diccionario por ID
     @Transactional(readOnly = true)
     public DiccionarioFallaResponse obtenerPorId(Long idFalla) {
         DiccionarioFalla falla = fallaRepository.findById(idFalla)
@@ -70,6 +72,7 @@ public class DiccionarioFallaService {
         DiccionarioFalla falla = fallaRepository.findById(idFalla)
                 .orElseThrow(() -> new IllegalArgumentException("El registro de falla no existe"));
 
+        // Permite conservar el mismo código al editar, pero bloquea si intenta usar el código de otra falla
         String nuevoCodigo = request.getCodigoFalla().trim().toUpperCase();
         if (!falla.getCodigoFalla().equals(nuevoCodigo) && fallaRepository.existsByCodigoFalla(nuevoCodigo)) {
             throw new IllegalArgumentException("Ya existe otra falla registrada con el código " + nuevoCodigo);
@@ -97,6 +100,7 @@ public class DiccionarioFallaService {
         DiccionarioFalla falla = fallaRepository.findById(idFalla)
                 .orElseThrow(() -> new IllegalArgumentException("El registro de falla no existe"));
 
+        // flush() fuerza el DELETE en BD antes de auditar para no registrar bajas si falla una restricción
         DiccionarioFalla snapshot = new DiccionarioFalla(falla);
         fallaRepository.delete(falla);
         fallaRepository.flush();

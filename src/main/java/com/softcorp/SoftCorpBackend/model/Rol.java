@@ -24,6 +24,7 @@ public class Rol {
     @Column(nullable = false, unique = true)
     private String descripcion;
 
+    // Constructor de copia para congelar el estado previo antes de auditar UPDATE/DELETE
     public Rol(Rol source) {
         this.idRol = source.idRol;
         this.codigo = source.codigo;

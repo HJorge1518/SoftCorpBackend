@@ -26,11 +26,13 @@ public class InformeTecnicoService {
     private final SolicitudRepuestoRepository solicitudRepository;
     private final AuditoriaService auditoriaService;
 
+    // Lista todos los informes del más reciente al más antiguo
     @Transactional(readOnly = true)
     public List<InformeTecnicoResponse> listar() {
         return InformeTecnicoResponse.fromEntities(informeRepository.findAllByOrderByIdInformeDesc());
     }
 
+    // Obtiene el informe único asociado a una incidencia
     @Transactional(readOnly = true)
     public InformeTecnicoResponse obtenerPorIncidencia(Long idIncidencia) {
         InformeTecnico informe = informeRepository.findByIncidenciaIdIncidencia(idIncidencia)
@@ -38,6 +40,8 @@ public class InformeTecnicoService {
         return InformeTecnicoResponse.fromEntity(informe);
     }
 
+    // HU08: guarda el informe y cierra la incidencia a SOLUCIONADO en la misma transacción;
+    // ambas auditorías (INSERT informe + UPDATE incidencia) comparten el mismo id_interaccion UUID
     @Transactional
     public InformeTecnicoResponse registrar(InformeTecnicoRequest request, Usuario tecnico) {
         Incidencia incidencia = incidenciaRepository.findById(request.getIdIncidencia())

@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// Par etiqueta-cantidad para gráficos circulares (Donut y Polar Area)
 @Data
 @Builder
 @NoArgsConstructor

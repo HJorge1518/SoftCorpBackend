@@ -22,6 +22,7 @@ public class DiccionarioFallaResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    // Mapea la falla e incluye el nombre corto del técnico autor
     public static DiccionarioFallaResponse fromEntity(DiccionarioFalla f) {
         Persona p = f.getAutor().getPersona();
         return DiccionarioFallaResponse.builder()

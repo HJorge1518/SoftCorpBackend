@@ -20,6 +20,7 @@ public class SolicitudRepuestoController {
 
     private final SolicitudRepuestoService solicitudService;
 
+    // Lista solicitudes con filtros opcionales (estado, idIncidencia)
     @GetMapping
     public ResponseEntity<List<SolicitudRepuestoResponse>> listar(
             @RequestParam(required = false) String estado,
@@ -27,17 +28,20 @@ public class SolicitudRepuestoController {
         return ResponseEntity.ok(solicitudService.listar(estado, idIncidencia));
     }
 
+    // Solo devuelve las solicitudes emitidas por el técnico logueado
     @GetMapping("/mis-solicitudes")
     public ResponseEntity<List<SolicitudRepuestoResponse>> misSolicitudes(
             @AuthenticationPrincipal Usuario tecnico) {
         return ResponseEntity.ok(solicitudService.misSolicitudes(tecnico));
     }
 
+    // Detalle de una solicitud por ID
     @GetMapping("/{id}")
     public ResponseEntity<SolicitudRepuestoResponse> obtenerPorId(@PathVariable Long id) {
         return ResponseEntity.ok(solicitudService.obtenerPorId(id));
     }
 
+    // HU07: crea solicitud de repuesto asociada al técnico autenticado
     @PostMapping
     public ResponseEntity<SolicitudRepuestoResponse> solicitar(
             @Valid @RequestBody SolicitudRepuestoRequest request,
@@ -45,6 +49,7 @@ public class SolicitudRepuestoController {
         return ResponseEntity.ok(solicitudService.solicitar(request, tecnico));
     }
 
+    // Actualiza estado a RECIBIDO o RECHAZADO (permitido para JEFE o TECNICO)
     @PutMapping("/{id}/estado")
     public ResponseEntity<SolicitudRepuestoResponse> cambiarEstado(
             @PathVariable Long id,

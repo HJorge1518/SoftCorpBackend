@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// Serie doble (pendientes/registradas vs solucionadas) para gráficos Area y Radar
 @Data
 @Builder
 @NoArgsConstructor

@@ -19,6 +19,7 @@ public class AppInfoController {
     @Value("${app.description:API del sistema de gestión de incidencias - Soft Corporation}")
     private String appDescription;
 
+    // Endpoint raíz público para verificar disponibilidad rápida en local y Render
     @GetMapping("/")
     public Map<String, Object> obtenerInformacion() {
         Map<String, Object> info = new LinkedHashMap<>();

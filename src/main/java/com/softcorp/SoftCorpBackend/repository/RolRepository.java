@@ -15,6 +15,7 @@ public interface RolRepository extends JpaRepository<Rol, Integer> {
 
     boolean existsByCodigo(String codigo);
 
+    // Filtro opcional por descripción (si es null devuelve todos los roles)
     @Query("""
             SELECT r FROM Rol r
             WHERE (:descripcion IS NULL OR LOWER(r.descripcion) LIKE :descripcion)

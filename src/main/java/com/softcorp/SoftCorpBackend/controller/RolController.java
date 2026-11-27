@@ -19,11 +19,13 @@ public class RolController {
 
     private final RolService rolService;
 
+    // Lista roles con filtro opcional en el body (patrón SIGCON)
     @PostMapping("/list")
     public ResponseEntity<?> list(@RequestBody(required = false) RolRequest request) {
         return ResponseEntity.ok(rolService.list(request));
     }
 
+    // Busca un rol puntual por idRol; devuelve 400 si falta el ID o 404 si no existe
     @PostMapping("/find")
     public ResponseEntity<?> find(@RequestBody Optional<RolRequest> request) {
         if (request.isEmpty() || request.get().getIdRol() == null) {
@@ -42,11 +44,13 @@ public class RolController {
         return ResponseEntity.ok(rolResponse);
     }
 
+    // Endpoint unificado para crear o editar rol según venga idRol en el JSON (solo JEFE)
     @PostMapping("/save")
     public ResponseEntity<?> save(@Valid @RequestBody RolRequest request) {
         return ResponseEntity.ok(rolService.save(request));
     }
 
+    // Acepta idRol tanto en el body como por query param para compatibilidad con SIGCON
     @DeleteMapping("/delete")
     public ResponseEntity<?> delete(
             @RequestBody(required = false) RolRequest request,

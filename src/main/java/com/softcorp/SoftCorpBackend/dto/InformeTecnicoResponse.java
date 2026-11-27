@@ -23,6 +23,7 @@ public class InformeTecnicoResponse {
     private LocalDateTime fechaInforme;
     private String estadoIncidencia;
 
+    // Incluye código INC-000X, equipo y estado final de la incidencia
     public static InformeTecnicoResponse fromEntity(InformeTecnico informe) {
         Persona p = informe.getTecnico().getPersona();
         return InformeTecnicoResponse.builder()

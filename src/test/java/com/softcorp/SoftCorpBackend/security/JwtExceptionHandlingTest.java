@@ -49,6 +49,7 @@ public class JwtExceptionHandlingTest {
         globalExceptionHandler = new GlobalExceptionHandler();
     }
 
+    // Verifica que el filtro delegue un token expirado al HandlerExceptionResolver (en vez de devolver 500)
     @Test
     public void testFilterDelegatesExpiredJwtExceptionToResolver() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest();
@@ -65,6 +66,7 @@ public class JwtExceptionHandlingTest {
         verify(handlerExceptionResolver).resolveException(eq(request), eq(response), eq(null), eq(expiredException));
     }
 
+    // Verifica que un token con firma inválida también pase al resolver global
     @Test
     public void testFilterDelegatesInvalidJwtExceptionToResolver() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest();
@@ -81,6 +83,7 @@ public class JwtExceptionHandlingTest {
         verify(handlerExceptionResolver).resolveException(eq(request), eq(response), eq(null), eq(jwtException));
     }
 
+    // Valida la respuesta JSON 401 para ExpiredJwtException
     @Test
     public void testGlobalExceptionHandlerExpiredJwt() {
         ExpiredJwtException ex = new ExpiredJwtException(null, null, "Token expired");
@@ -93,6 +96,7 @@ public class JwtExceptionHandlingTest {
         assertEquals("El token JWT ha expirado", response.getBody().getMessage());
     }
 
+    // Valida la respuesta JSON 401 para credenciales incorrectas
     @Test
     public void testGlobalExceptionHandlerBadCredentials() {
         BadCredentialsException ex = new BadCredentialsException("Contraseña incorrecta");
@@ -105,6 +109,7 @@ public class JwtExceptionHandlingTest {
         assertEquals("Contraseña incorrecta", response.getBody().getMessage());
     }
 
+    // Valida la traducción de errores FK de PostgreSQL a 400 Bad Request
     @Test
     public void testGlobalExceptionHandlerDataIntegrityViolationForeignKey() {
         DataIntegrityViolationException ex = new DataIntegrityViolationException(

@@ -34,6 +34,7 @@ public class SecurityConfig {
     @Value("${app.cors.allowed-origin}")
     private String allowedOrigin;
 
+    // Cadena de filtros STATELESS: valida JWT antes del filtro estándar y aplica permisos por rol
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -96,6 +97,7 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
+    // Lee orígenes separados por coma desde CORS_ALLOWED_ORIGIN y habilita preflight OPTIONS
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();

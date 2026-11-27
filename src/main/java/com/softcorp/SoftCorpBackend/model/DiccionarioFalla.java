@@ -49,6 +49,7 @@ public class DiccionarioFalla {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // Constructor de copia para capturar snapshot previo en auditoría
     public DiccionarioFalla(DiccionarioFalla source) {
         this.idFalla = source.idFalla;
         this.codigoFalla = source.codigoFalla;

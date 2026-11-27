@@ -21,6 +21,7 @@ public class InformeTecnico {
     @Column(name = "id_informe")
     private Long idInforme;
 
+    // Relación 1 a 1 estricta (unique = true impide registrar dos informes para la misma incidencia)
     @OneToOne
     @JoinColumn(name = "id_incidencia", nullable = false, unique = true)
     private Incidencia incidencia;

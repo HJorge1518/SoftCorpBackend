@@ -36,6 +36,7 @@ public class AuditoriaService {
         this.cambioRepository = cambioRepository;
     }
 
+    // REQUIRES_NEW abre una transacción independiente para asegurar el commit en auditoría
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void registrarCreacion(String esquema, String tabla,
                                   String idRegistro, String modulo) {
@@ -44,6 +45,7 @@ public class AuditoriaService {
         log.debug("[Auditoria] INSERT registrado - tabla={}.{} id={}", esquema, tabla, idRegistro);
     }
 
+    // Registra el evento UPDATE y guarda solo los campos que cambiaron entre antes y después
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void registrarActualizacion(String esquema, String tabla,
                                        String idRegistro, String modulo,
@@ -56,6 +58,7 @@ public class AuditoriaService {
                 esquema, tabla, idRegistro, cambios.size());
     }
 
+    // Registra el evento DELETE junto con la foto completa del registro eliminado
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void registrarEliminacion(String esquema, String tabla,
                                      String idRegistro, String modulo,
@@ -89,6 +92,7 @@ public class AuditoriaService {
                 .build();
     }
 
+    // Compara campo por campo vía reflexión para llenar auditoria.cambio (omite constantes static)
     private List<Cambio> compararCampos(Evento evento, Object anterior, Object nuevo) {
         List<Cambio> cambios = new ArrayList<>();
         if (anterior == null || nuevo == null) return cambios;
@@ -141,6 +145,7 @@ public class AuditoriaService {
         return cambios;
     }
 
+    // Enmascara passwordHash para no guardar hashes de contraseña en las tablas de auditoría
     private String toStr(Object obj) {
         if (obj == null) return null;
         return obj.toString().replaceAll("passwordHash=[^,)]+", "passwordHash=[PROTEGIDO]");

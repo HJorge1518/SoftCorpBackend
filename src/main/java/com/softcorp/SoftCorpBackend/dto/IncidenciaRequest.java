@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class IncidenciaRequest {
+    // (?i) acepta minúsculas y el servicio luego normaliza a mayúsculas; refuerza en API la regex del frontend
     @NotBlank(message = "El código del equipo es obligatorio")
     @Pattern(regexp = "^(?i)PC-[A-Z]{2,6}-\\d{3,4}$",
              message = "El código del equipo debe seguir el formato PC-AREA-001 (ej. PC-ADM-014)")

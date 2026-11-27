@@ -14,6 +14,7 @@ public class WebConfig implements WebMvcConfigurer {
         this.auditoriaInterceptor = auditoriaInterceptor;
     }
 
+    // Intercepta únicamente rutas /api/**, excluyendo monitoreo (Actuator) y documentación (Swagger)
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(auditoriaInterceptor)

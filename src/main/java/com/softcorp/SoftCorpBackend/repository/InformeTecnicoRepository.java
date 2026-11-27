@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+// Consultas sobre informe_tecnico; existsByIncidencia... evita duplicar informes en HU08
 @Repository
 public interface InformeTecnicoRepository extends JpaRepository<InformeTecnico, Long> {
     List<InformeTecnico> findAllByOrderByIdInformeDesc();

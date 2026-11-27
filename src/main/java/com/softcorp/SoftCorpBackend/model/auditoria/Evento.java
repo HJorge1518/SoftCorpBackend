@@ -10,6 +10,7 @@ import org.hibernate.annotations.ColumnTransformer;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+// Entidad en esquema separado "auditoria" para registrar cada operación HTTP/BD
 @Entity
 @Table(name = "evento", schema = "auditoria")
 @Data
@@ -45,6 +46,7 @@ public class Evento {
     @Builder.Default
     private OffsetDateTime fechaEvento = OffsetDateTime.now();
 
+    // Convierte entre String en Java y tipo nativo INET de PostgreSQL (host() quita la máscara al leer)
     @ColumnTransformer(read = "host(ip_origen)", write = "?::inet")
     @Column(name = "ip_origen", columnDefinition = "inet")
     private String ipOrigen;

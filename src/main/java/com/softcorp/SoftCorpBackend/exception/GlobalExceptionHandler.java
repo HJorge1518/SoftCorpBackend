@@ -16,24 +16,29 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+// Centraliza excepciones de controllers y filtros (vía HandlerExceptionResolver) en JSON uniforme
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    // Credenciales inválidas en login → 401
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponse> handleAuthentication(AuthenticationException ex) {
         return build(HttpStatus.UNAUTHORIZED, ex.getMessage(), null, null);
     }
 
+    // Token JWT vencido → 401
     @ExceptionHandler(ExpiredJwtException.class)
     public ResponseEntity<ErrorResponse> handleExpiredJwt(ExpiredJwtException ex) {
         return build(HttpStatus.UNAUTHORIZED, "El token JWT ha expirado", null, null);
     }
 
+    // Token alterado, malformado o firma inválida → 401
     @ExceptionHandler(JwtException.class)
     public ResponseEntity<ErrorResponse> handleJwt(JwtException ex) {
         return build(HttpStatus.UNAUTHORIZED, "Token JWT inválido: " + ex.getMessage(), null, null);
     }
 
+    // Traduce errores FK / UNIQUE de PostgreSQL usando la causa raíz JDBC → 400
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrity(DataIntegrityViolationException ex) {
         String detail = ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage();
@@ -46,6 +51,7 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, message, detail, null);
     }
 
+    // Recurso no encontrado (ej. historial de equipo inexistente en HU12) → 404
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<ErrorResponse> handleNoSuchElement(NoSuchElementException ex) {
         String msg = ex.getMessage() != null && !ex.getMessage().isBlank()
@@ -53,11 +59,13 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.NOT_FOUND, msg, null, null);
     }
 
+    // Errores de reglas de negocio lanzados desde los servicios → 400
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage(), null, null);
     }
 
+    // Errores de @Valid en DTOs: conserva el orden de campos con LinkedHashMap → 400
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
         Map<String, String> fieldErrors = new LinkedHashMap<>();

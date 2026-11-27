@@ -27,7 +27,7 @@ public class IncidenciaService {
         return IncidenciaResponse.fromEntities(incidenciaRepository.findAllByOrderByIdIncidenciaDesc());
     }
 
-    // HU06: bandeja "Mis tareas" del técnico autenticado
+    // HU06: bandeja "Mis tareas" del técnico autenticado; normaliza el filtro opcional y valida valores permitidos
     @Transactional(readOnly = true)
     public List<IncidenciaResponse> misTareas(Usuario tecnico, String estado) {
         String estadoFiltro = null;
@@ -92,6 +92,7 @@ public class IncidenciaService {
             throw new IllegalArgumentException("El técnico ya alcanzó su límite de atención ("
                     + carga + " de " + tecnico.getLimiteAtencion() + ")");
 
+        // Constructor de copia para congelar el estado previo antes de asignar (JPA gestiona la misma instancia)
         Incidencia estadoAnterior = new Incidencia(incidencia);
         incidencia.setTecnico(tecnico);
         incidencia.setFechaAsignacion(LocalDateTime.now());

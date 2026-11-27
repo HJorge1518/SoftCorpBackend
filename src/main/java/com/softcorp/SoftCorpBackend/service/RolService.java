@@ -19,6 +19,7 @@ public class RolService {
     private final RolRepository rolRepository;
     private final AuditoriaService auditoriaService;
 
+    // Filtra roles por descripción usando patrón %texto% en minúsculas
     @Transactional(readOnly = true)
     public List<RolResponse> list(RolRequest filter) {
         String descripcion = (filter == null || filter.getDescripcion() == null || filter.getDescripcion().isBlank())
@@ -27,6 +28,7 @@ public class RolService {
         return RolResponse.fromEntities(rolRepository.findByFilter(descripcion));
     }
 
+    // Busca un rol por ID (retorna null si no existe para que el controller devuelva 404)
     @Transactional(readOnly = true)
     public RolResponse find(Integer id) {
         return rolRepository.findById(id)
@@ -34,12 +36,14 @@ public class RolService {
                 .orElse(null);
     }
 
+    // Patrón SIGCON: crea si idRol es null o actualiza si idRol > 0; saveAndFlush detecta duplicados y da el ID para auditoría
     @Transactional
     public RolResponse save(RolRequest rolRequest) {
         boolean esActualizacion = rolRequest.getIdRol() != null && rolRequest.getIdRol() > 0;
         Rol estadoAnterior = null;
 
         if (esActualizacion) {
+            // Constructor de copia para congelar el estado previo antes de sobrescribirlo
             estadoAnterior = rolRepository.findById(rolRequest.getIdRol())
                     .map(Rol::new)
                     .orElseThrow(() -> new IllegalArgumentException("El rol a actualizar no existe"));
@@ -60,6 +64,7 @@ public class RolService {
         return RolResponse.fromEntity(rol);
     }
 
+    // Elimina por ID haciendo flush previo para capturar FK si el rol está asignado a usuarios/módulos
     @Transactional
     public void delete(Integer id) {
         Rol estadoAnterior = rolRepository.findById(id).map(Rol::new).orElse(null);

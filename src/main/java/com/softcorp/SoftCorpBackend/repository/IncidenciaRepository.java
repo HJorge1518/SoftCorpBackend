@@ -31,7 +31,7 @@ public interface IncidenciaRepository extends JpaRepository<Incidencia, Long> {
     List<Incidencia> findMisTareas(@Param("idTecnico") Long idTecnico,
                                    @Param("estado") String estado);
 
-    // PC3 Chart (Radar): pendientes vs solucionadas por área
+    // PC3 Chart (Radar): NULLIF + COALESCE agrupan áreas vacías como 'Sin área' y FILTER cuenta ambos estados en una pasada
     @Query(value = """
             SELECT COALESCE(NULLIF(TRIM(area), ''), 'Sin área') AS area,
                    COUNT(*) FILTER (WHERE estado = 'PENDIENTE') AS pendientes,
@@ -42,7 +42,7 @@ public interface IncidenciaRepository extends JpaRepository<Incidencia, Long> {
             """, nativeQuery = true)
     List<Object[]> countPorAreaYEstado();
 
-    // PC3 Chart (Line/Area): evolución diaria
+    // PC3 Chart (Line/Area): UNION + doble LEFT JOIN para no perder días que solo tuvieron registros o solo cierres
     @Query(value = """
             SELECT TO_CHAR(d.fecha, 'YYYY-MM-DD') AS fecha,
                    COALESCE(r.registradas, 0) AS registradas,
@@ -64,7 +64,7 @@ public interface IncidenciaRepository extends JpaRepository<Incidencia, Long> {
             """, nativeQuery = true)
     List<Object[]> evolucionDiaria();
 
-    // PC3 Chart (Heatmap): rendimiento por técnico
+    // PC3 Chart (Heatmap): LEFT JOIN sobre usuarios TECNICO para incluir también a quienes tienen 0 incidencias
     @Query(value = """
             SELECT p.nombres || ' ' || p.apellido_paterno AS tecnico,
                    COUNT(*) FILTER (WHERE i.estado = 'PENDIENTE') AS pendientes,

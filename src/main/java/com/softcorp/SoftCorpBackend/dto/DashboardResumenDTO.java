@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// KPIs de resumen mostrados en las tarjetas superiores del dashboard
 @Data
 @Builder
 @NoArgsConstructor

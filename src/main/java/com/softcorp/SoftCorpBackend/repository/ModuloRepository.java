@@ -11,6 +11,7 @@ import java.util.List;
 @Repository
 public interface ModuloRepository extends JpaRepository<Modulo, Integer> {
 
+    // JOIN con la tabla intermedia rol_modulo para armar los módulos activos que van al JWT
     @Query(value = """
             SELECT m.* FROM modulo m
             JOIN rol_modulo rm ON m.id_mod = rm.id_mod
@@ -19,6 +20,7 @@ public interface ModuloRepository extends JpaRepository<Modulo, Integer> {
             """, nativeQuery = true)
     List<Modulo> findByRolId(@Param("idRol") Integer idRol);
 
+    // Lista módulos activos ordenados, con filtro opcional por descripción
     @Query("""
             SELECT m FROM Modulo m
             WHERE m.activo = 'S'

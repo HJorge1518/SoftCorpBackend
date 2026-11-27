@@ -56,6 +56,7 @@ public class AuthService {
                 .build();
         usuario = usuarioRepository.save(usuario);
 
+        // Ambos eventos quedan correlacionados con el mismo id_interaccion generado por AuditoriaInterceptor
         auditoriaService.registrarCreacion("public", "persona", persona.getIdPersona().toString(), "Acceso");
         auditoriaService.registrarCreacion("public", "usuario", usuario.getId().toString(), "Acceso");
 

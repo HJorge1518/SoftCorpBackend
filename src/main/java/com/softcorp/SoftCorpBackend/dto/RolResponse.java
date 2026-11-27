@@ -17,6 +17,7 @@ public class RolResponse {
     private String codigo;
     private String descripcion;
 
+    // Proyecta la entidad Rol hacia el DTO de salida
     public static RolResponse fromEntity(Rol rol) {
         return RolResponse.builder()
                 .idRol(rol.getIdRol())

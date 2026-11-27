@@ -23,6 +23,7 @@ public class SolicitudRepuestoService {
     private final IncidenciaRepository incidenciaRepository;
     private final AuditoriaService auditoriaService;
 
+    // Lista solicitudes filtrando opcionalmente por estado y/o incidencia
     @Transactional(readOnly = true)
     public List<SolicitudRepuestoResponse> listar(String estado, Long idIncidencia) {
         String estadoNorm = (estado == null || estado.isBlank()) ? null : estado.trim().toUpperCase();
@@ -30,12 +31,14 @@ public class SolicitudRepuestoService {
                 solicitudRepository.findByFilter(estadoNorm, idIncidencia));
     }
 
+    // Bandeja personal del técnico autenticado
     @Transactional(readOnly = true)
     public List<SolicitudRepuestoResponse> misSolicitudes(Usuario tecnico) {
         return SolicitudRepuestoResponse.fromEntities(
                 solicitudRepository.findByTecnicoIdOrderByIdSolicitudDesc(tecnico.getId()));
     }
 
+    // Consulta una solicitud puntual por su ID
     @Transactional(readOnly = true)
     public SolicitudRepuestoResponse obtenerPorId(Long idSolicitud) {
         SolicitudRepuesto solicitud = solicitudRepository.findById(idSolicitud)
@@ -43,6 +46,8 @@ public class SolicitudRepuestoService {
         return SolicitudRepuestoResponse.fromEntity(solicitud);
     }
 
+    // HU07: registra solicitud de repuesto solo si la incidencia está PENDIENTE y pertenece al técnico;
+    // si trasladarEquipo es true y seguía en oficina, mueve el equipo a AREA_SOPORTE manteniendo estado PENDIENTE
     @Transactional
     public SolicitudRepuestoResponse solicitar(SolicitudRepuestoRequest request, Usuario tecnico) {
         Incidencia incidencia = incidenciaRepository.findById(request.getIdIncidencia())
@@ -90,6 +95,7 @@ public class SolicitudRepuestoService {
         return SolicitudRepuestoResponse.fromEntity(solicitud);
     }
 
+    // Solo permite pasar de SOLICITADO a RECIBIDO o RECHAZADO y guarda fecha de respuesta
     @Transactional
     public SolicitudRepuestoResponse cambiarEstado(Long idSolicitud, String nuevoEstado) {
         SolicitudRepuesto solicitud = solicitudRepository.findById(idSolicitud)

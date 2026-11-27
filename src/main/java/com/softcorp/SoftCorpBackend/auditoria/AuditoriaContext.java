@@ -2,6 +2,7 @@ package com.softcorp.SoftCorpBackend.auditoria;
 
 import java.util.UUID;
 
+// Contexto por hilo (ThreadLocal) para pasar IP, usuario y UUID desde el interceptor hasta los servicios
 public final class AuditoriaContext {
 
     private static final ThreadLocal<AuditoriaContext> HOLDER = new ThreadLocal<>();
@@ -19,6 +20,7 @@ public final class AuditoriaContext {
         HOLDER.set(new AuditoriaContext());
     }
 
+    // Libera el ThreadLocal al terminar el request y evita fugas o datos cruzados entre hilos de Tomcat
     public static void limpiar() {
         HOLDER.remove();
     }

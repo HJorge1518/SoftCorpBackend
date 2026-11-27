@@ -19,16 +19,19 @@ public class    InformeTecnicoController {
 
     private final InformeTecnicoService informeService;
 
+    // Lista informes técnicos registrados
     @GetMapping
     public ResponseEntity<List<InformeTecnicoResponse>> listar() {
         return ResponseEntity.ok(informeService.listar());
     }
 
+    // Consulta el informe técnico de una incidencia específica
     @GetMapping("/incidencia/{idIncidencia}")
     public ResponseEntity<InformeTecnicoResponse> obtenerPorIncidencia(@PathVariable Long idIncidencia) {
         return ResponseEntity.ok(informeService.obtenerPorIncidencia(idIncidencia));
     }
 
+    // HU08: registra informe técnico (solo TECNICO) y cierra la incidencia asociada
     @PostMapping
     public ResponseEntity<InformeTecnicoResponse> registrar(
             @Valid @RequestBody InformeTecnicoRequest request,

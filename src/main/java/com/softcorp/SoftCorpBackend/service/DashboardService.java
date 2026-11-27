@@ -23,6 +23,7 @@ public class DashboardService {
     private final SolicitudRepuestoRepository solicitudRepository;
     private final DiccionarioFallaRepository fallaRepository;
 
+    // readOnly = true evita que Hibernate mantenga snapshots de dirty checking en memoria
     @Transactional(readOnly = true)
     public DashboardResumenDTO resumen() {
         return DashboardResumenDTO.builder()
@@ -36,6 +37,7 @@ public class DashboardService {
                 .build();
     }
 
+    // Mapea filas [fecha, registradas, solucionadas]; Number.longValue() evita errores entre BigInteger y Long
     @Transactional(readOnly = true)
     public List<ChartSerieEstadoDTO> evolucionDiaria() {
         return incidenciaRepository.evolucionDiaria().stream()
@@ -47,6 +49,7 @@ public class DashboardService {
                 .toList();
     }
 
+    // Conteo de pendientes vs solucionadas agrupado por área para el Radar
     @Transactional(readOnly = true)
     public List<ChartSerieEstadoDTO> incidenciasPorArea() {
         return incidenciaRepository.countPorAreaYEstado().stream()
@@ -58,6 +61,7 @@ public class DashboardService {
                 .toList();
     }
 
+    // Carga actual, cierres y límite de atención por técnico para el Heatmap
     @Transactional(readOnly = true)
     public List<RendimientoTecnicoDTO> rendimientoTecnicos() {
         return incidenciaRepository.rendimientoPorTecnico().stream()

@@ -60,6 +60,7 @@ public class ReporteService {
                 .toList();
     }
 
+    // Pattern matching de Java 21 para soportar el tipo que devuelva el driver JDBC en DATE(fecha_solucion)
     private LocalDate aLocalDate(Object valor) {
         return switch (valor) {
             case LocalDate ld -> ld;

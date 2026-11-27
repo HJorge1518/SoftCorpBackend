@@ -15,6 +15,7 @@ public class ModuloService {
 
     private final ModuloRepository moduloRepository;
 
+    // Arma patrón %descripcion% para buscar módulos activos por nombre
     @Transactional(readOnly = true)
     public List<ModuloResponse> list(ModuloRequest filter) {
         String descripcion = (filter == null || filter.getDescripcion() == null || filter.getDescripcion().isBlank())
@@ -23,6 +24,7 @@ public class ModuloService {
         return ModuloResponse.fromEntities(moduloRepository.findByFilter(descripcion));
     }
 
+    // Busca un módulo puntual por ID (retorna null si no existe)
     @Transactional(readOnly = true)
     public ModuloResponse find(Integer id) {
         return moduloRepository.findById(id)

@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// Métricas por técnico (carga actual, cierres y cupo) usadas en el Heatmap
 @Data
 @Builder
 @NoArgsConstructor

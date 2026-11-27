@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// Validaciones de entrada para HU08 (longitudes mínimas/máximas y lugar de solución permitido)
 @Data
 @Builder
 @NoArgsConstructor

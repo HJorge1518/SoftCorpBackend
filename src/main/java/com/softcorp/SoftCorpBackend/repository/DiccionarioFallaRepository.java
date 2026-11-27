@@ -13,6 +13,7 @@ public interface DiccionarioFallaRepository extends JpaRepository<DiccionarioFal
 
     boolean existsByCodigoFalla(String codigoFalla);
 
+    // Búsqueda insensible a mayúsculas en 5 columnas usando LIKE parametrizado (evita SQL injection)
     @Query("""
             SELECT d FROM DiccionarioFalla d
             WHERE (:categoria IS NULL OR d.categoria = :categoria)
@@ -27,6 +28,7 @@ public interface DiccionarioFallaRepository extends JpaRepository<DiccionarioFal
     List<DiccionarioFalla> buscar(@Param("keywordPattern") String keywordPattern,
                                   @Param("categoria") String categoria);
 
+    // Agregación por categoría para el gráfico Donut del dashboard
     @Query(value = """
             SELECT categoria, COUNT(*) AS cantidad
             FROM diccionario_falla

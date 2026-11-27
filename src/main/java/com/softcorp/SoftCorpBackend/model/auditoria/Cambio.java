@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// Detalle campo por campo (antes/después) asociado a un evento UPDATE o DELETE
 @Entity
 @Table(name = "cambio", schema = "auditoria")
 @Data

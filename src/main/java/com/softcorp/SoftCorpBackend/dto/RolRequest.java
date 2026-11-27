@@ -25,6 +25,7 @@ public class RolRequest {
     @Size(min = 3, max = 100, message = "La descripción debe tener entre 3 y 100 caracteres")
     private String descripcion;
 
+    // Normaliza código a mayúsculas y conserva idRol solo cuando viene una actualización
     public static Rol toEntity(RolRequest request) {
         Rol rol = new Rol();
         if (request.getIdRol() != null && request.getIdRol() > 0) {

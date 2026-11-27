@@ -15,6 +15,7 @@ public class SolicitudRepuestoRequest {
     @Positive(message = "El ID de la incidencia debe ser positivo")
     private Long idIncidencia;
 
+    // Refuerza en backend el formato REP-TIPO-001 y tope de cantidad (1-20) ante peticiones directas
     @NotBlank(message = "El código del repuesto es obligatorio")
     @Pattern(regexp = "^(?i)REP-[A-Z0-9]{2,6}-\\d{3,4}$",
              message = "El código del repuesto debe tener formato REP-TIPO-001 (ej. REP-RAM-008)")

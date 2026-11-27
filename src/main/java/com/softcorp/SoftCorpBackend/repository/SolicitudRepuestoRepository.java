@@ -26,6 +26,7 @@ public interface SolicitudRepuestoRepository extends JpaRepository<SolicitudRepu
     List<SolicitudRepuesto> findByFilter(@Param("estado") String estado,
                                          @Param("idIncidencia") Long idIncidencia);
 
+    // Conteo por estado (SOLICITADO, RECIBIDO, RECHAZADO) para el gráfico Polar Area
     @Query(value = """
             SELECT estado, COUNT(*) AS cantidad
             FROM solicitud_repuesto

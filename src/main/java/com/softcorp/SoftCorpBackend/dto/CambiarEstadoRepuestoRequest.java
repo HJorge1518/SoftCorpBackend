@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// Solo permite transicionar solicitudes pendientes hacia RECIBIDO o RECHAZADO
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

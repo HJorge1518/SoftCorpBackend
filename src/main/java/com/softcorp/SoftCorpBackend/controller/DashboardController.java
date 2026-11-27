@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+// Endpoints analíticos para el dashboard (accesible a cualquier usuario autenticado)
 @RestController
 @RequestMapping("/api/v1/dashboard")
 @RequiredArgsConstructor
@@ -20,6 +21,7 @@ public class DashboardController {
 
     private final DashboardService dashboardService;
 
+    // Tarjetas KPI principales del panel de bienvenida
     @GetMapping("/resumen")
     public ResponseEntity<DashboardResumenDTO> resumen() {
         return ResponseEntity.ok(dashboardService.resumen());

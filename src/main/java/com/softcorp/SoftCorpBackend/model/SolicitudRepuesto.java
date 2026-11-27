@@ -60,6 +60,7 @@ public class SolicitudRepuesto {
     @Column(name = "fecha_respuesta")
     private LocalDateTime fechaRespuesta;
 
+    // Constructor de copia para registrar el antes/después en auditoria.cambio
     public SolicitudRepuesto(SolicitudRepuesto source) {
         this.idSolicitud = source.idSolicitud;
         this.incidencia = source.incidencia;
